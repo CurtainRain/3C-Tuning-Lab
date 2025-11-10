@@ -12,14 +12,14 @@ public class CharacterController3C : MonoBehaviour
     [Header("移动设置")]
     [SerializeField] private float walkSpeed = 5f;
     [SerializeField] private float sprintSpeed = 8f;
-    [SerializeField] private float jumpHeight = 2f;
+    [SerializeField] private float jumpHeight = 0.5f;
     [SerializeField] private float gravity = -9.81f;
 
     private CharacterController _characterController;
     private Vector3 _velocity;
     private float _currentSpeed;
 
-    public Transform cameraTransform;
+    [HideInInspector] public Transform cameraTransform;
 
     private float _carrentYawSpeed;
     private float _carrentYawSpeedVelocity;
@@ -72,11 +72,11 @@ public class CharacterController3C : MonoBehaviour
         // 处理移动
         HandleMovement();
 
-        // // 处理跳跃
-        // HandleJump();
+        // 处理跳跃
+        HandleJump();
 
-        // // 应用重力
-        // ApplyGravity();
+        // 应用重力
+        ApplyGravity();
 
         // 应用移动
         _characterController.Move(_velocity * Time.deltaTime);
@@ -107,16 +107,16 @@ public class CharacterController3C : MonoBehaviour
         _velocity.z = moveDirection.z * _currentSpeed;
     }
 
-    // private void HandleJump()
-    // {
-    //     if (_inputData.jumpPressed)
-    //     {
-    //         _velocity.y = Mathf.Sqrt(jumpHeight * -2f * gravity);
-    //     }
-    // }
+    private void HandleJump()
+    {
+        if (_inputData.jumpPressed)
+        {
+            _velocity.y = Mathf.Sqrt(jumpHeight * -2f * gravity);
+        }
+    }
 
-    // private void ApplyGravity()
-    // {
-    //     _velocity.y += gravity * Time.deltaTime;
-    // }
+    private void ApplyGravity()
+    {
+        _velocity.y += gravity * Time.deltaTime;
+    }
 }
