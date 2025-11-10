@@ -1,0 +1,68 @@
+{
+  // 启用保存时自动格式化
+  "editor.formatOnSave": true,
+  "editor.formatOnPaste": false,
+  "editor.formatOnType": false,
+
+  // 设置默认格式化工具为 Prettier
+  "editor.defaultFormatter": "esbenp.prettier-vscode",
+
+  // 代码操作设置
+  "editor.codeActionsOnSave": {
+    "source.fixAll": "explicit",
+    "source.organizeImports": "never"
+  },
+
+  // 确保 Prettier 启用
+  "prettier.enable": true,
+  "prettier.requireConfig": false,
+  "prettier.useEditorConfig": false,
+
+  // 为不同文件类型指定格式化工具
+  "[javascript]": {
+    "editor.defaultFormatter": "esbenp.prettier-vscode",
+    "editor.formatOnSave": true
+  },
+  "[typescript]": {
+    "editor.defaultFormatter": "esbenp.prettier-vscode",
+    "editor.formatOnSave": true
+  },
+  "[json]": {
+    "editor.defaultFormatter": "esbenp.prettier-vscode",
+    "editor.formatOnSave": true
+  },
+  "[jsonc]": {
+    "editor.defaultFormatter": "esbenp.prettier-vscode",
+    "editor.formatOnSave": true
+  },
+  "[markdown]": {
+    "editor.defaultFormatter": "esbenp.prettier-vscode",
+    "editor.formatOnSave": true
+  },
+  "[yaml]": {
+    "editor.defaultFormatter": "esbenp.prettier-vscode",
+    "editor.formatOnSave": true
+  },
+  "[yml]": {
+    "editor.defaultFormatter": "esbenp.prettier-vscode",
+    "editor.formatOnSave": true
+  },
+
+  // C# 文件使用 OmniSharp 或 C# 扩展格式化（Prettier 不支持 C#）
+  "[csharp]": {
+    "editor.formatOnSave": true,
+    "editor.defaultFormatter": "ms-dotnettools.csharp",
+    "editor.codeActionsOnSave": {
+      "source.fixAll": "explicit",
+      "source.organizeImports": "explicit"
+    },
+    // 删除尾随空格
+    "files.trimTrailingWhitespace": true,
+    "files.insertFinalNewline": true
+  },
+
+  // 全局设置：删除尾随空格
+  "files.trimTrailingWhitespace": true,
+  "files.insertFinalNewline": true,
+  "files.trimFinalNewlines": true
+}

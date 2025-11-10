@@ -1,0 +1,12 @@
+{
+  "name": "tool-demo",
+  "version": "1.0.0",
+  "description": "Unity Tool Demo Project",
+  "scripts": {
+    "format": "prettier --write \"**/*.{js,ts,json,md,yaml,yml}\"",
+    "format:check": "prettier --check \"**/*.{js,ts,json,md,yaml,yml}\""
+  },
+  "devDependencies": {
+    "prettier": "^3.0.0"
+  }
+}

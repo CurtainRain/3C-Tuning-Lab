@@ -1,0 +1,37 @@
+# EditorConfig 配置文件
+# https://editorconfig.org
+
+root = true
+
+# 所有文件通用设置
+[*]
+charset = utf-8
+end_of_line = lf
+insert_final_newline = true
+trim_trailing_whitespace = true
+indent_style = space
+indent_size = 4
+
+# C# 文件设置
+[*.cs]
+indent_size = 4
+indent_style = space
+
+# JSON 文件设置
+[*.json]
+indent_size = 2
+indent_style = space
+
+# JavaScript/TypeScript 文件设置
+[*.{js,ts}]
+indent_size = 2
+indent_style = space
+
+# Markdown 文件设置
+[*.md]
+trim_trailing_whitespace = false
+
+# YAML 文件设置
+[*.{yaml,yml}]
+indent_size = 2
+indent_style = space
