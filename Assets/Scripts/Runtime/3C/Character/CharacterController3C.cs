@@ -9,11 +9,8 @@ using UnityEngine;
 [RequireComponent(typeof(CharacterController))]
 public class CharacterController3C : MonoBehaviour
 {
-    [Header("移动设置")]
-    [SerializeField] private float walkSpeed = 5f;
-    [SerializeField] private float sprintSpeed = 8f;
-    [SerializeField] private float jumpHeight = 0.5f;
-    [SerializeField] private float gravity = -9.81f;
+    [Header("角色设置")]
+    [SerializeField] private CharacterController3CParams _characterController3CParams;
 
     private CharacterController _characterController;
     private Vector3 _velocity;
@@ -44,6 +41,12 @@ public class CharacterController3C : MonoBehaviour
             return;
         }
 
+        if(_characterController3CParams == null)
+        {
+            Debug.LogError("CharacterController3C: 未设置 CharacterController3CParams，将无法进行控制！");
+            return;
+        }
+
         // 订阅输入更新事件
         Debug.Log("CharacterController3C: 找到 InputHandler，订阅输入更新事件");
         _inputHandler.OnInputUpdated += OnInputReceived;
@@ -69,6 +72,8 @@ public class CharacterController3C : MonoBehaviour
 
     private void Update()
     {
+        if (_characterController3CParams == null) return;
+
         // 处理移动
         HandleMovement();
 
@@ -85,7 +90,7 @@ public class CharacterController3C : MonoBehaviour
     private void HandleMovement()
     {
         // 根据是否冲刺选择速度
-        _currentSpeed = _inputData.sprintHeld ? sprintSpeed : walkSpeed;
+        _currentSpeed = _inputData.sprintHeld ? _characterController3CParams.sprintSpeed : _characterController3CParams.walkSpeed;
 
         // 走动的时候 以摄像机面朝平面方向转换为世界空间方向
         Vector3 moveDirection = Vector3.zero;
@@ -111,12 +116,12 @@ public class CharacterController3C : MonoBehaviour
     {
         if (_inputData.jumpPressed)
         {
-            _velocity.y = Mathf.Sqrt(jumpHeight * -2f * gravity);
+            _velocity.y = Mathf.Sqrt(_characterController3CParams.jumpHeight * -2f * Physics.gravity.y * _characterController3CParams.gravityFactor);
         }
     }
 
     private void ApplyGravity()
     {
-        _velocity.y += gravity * Time.deltaTime;
+        _velocity.y += Physics.gravity.y * _characterController3CParams.gravityFactor * Time.deltaTime;
     }
 }

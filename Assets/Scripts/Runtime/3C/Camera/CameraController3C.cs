@@ -12,16 +12,7 @@ public class CameraController3C : MonoBehaviour
     [SerializeField] private Transform target; // 跟随的角色
 
     [Header("摄像机设置")]
-    [Tooltip("旋转平滑时间，单位：秒")] [SerializeField] private float rotationSmoothTime = 0.1f;
-    [Tooltip("缩放平滑因子，越小延迟感越强")] [SerializeField] private float zoomSmoothFactor = 6f;
-
-    [Header("视角调整")]
-    [Tooltip("鼠标灵敏度")] [SerializeField] private float mouseSensitivity = 24f;
-    [Tooltip("垂直视角最小角度，单位：度")] [SerializeField] private float minVerticalAngle = -90f;
-    [Tooltip("垂直视角最大角度，单位：度")] [SerializeField] private float maxVerticalAngle = 90f;
-    [Tooltip("缩放灵敏度")] [SerializeField] private float zoomSensitivity = 50f;
-    [Tooltip("最小缩放距离")] [SerializeField] private float minZoom = 1f;
-    [Tooltip("最大缩放距离")] [SerializeField] private float maxZoom = 30f;
+    [SerializeField] private CameraController3CParams _cameraController3CParams;
 
     private float _verticalRotationVelocity;
     private float _horizontalRotationVelocity;
@@ -40,10 +31,17 @@ public class CameraController3C : MonoBehaviour
     private void Start()
     {
         // 如果没有指定目标，报错并返回
+        Debug.Log(gameObject.name + " CameraController3C: 开始初始化");
         if (target == null)
         {
            Debug.LogError("CameraController3C: 未指定跟随目标，将无法进行跟随！");
            return;
+        }
+
+        if(_cameraController3CParams == null)
+        {
+            Debug.LogError("CameraController3C: 未设置 CameraController3CParams，将无法进行跟随！");
+            return;
         }
 
         var comp = target.GetComponent<CharacterController3C>();
@@ -92,6 +90,7 @@ public class CameraController3C : MonoBehaviour
     private void LateUpdate()
     {
         if (target == null) return;
+        if (_cameraController3CParams == null) return;
 
         // 处理视角旋转
         HandleRotation();
@@ -106,12 +105,12 @@ public class CameraController3C : MonoBehaviour
         var finalTargetYaw = currentYaw;
         if (Mathf.Abs(_inputData.lookInput.x) > 0.01f)
         {
-            var targetYaw = currentYaw + _inputData.lookInput.x * mouseSensitivity;
+            var targetYaw = currentYaw + _inputData.lookInput.x * _cameraController3CParams.mouseSensitivity;
             targetYaw = Mathf.SmoothDampAngle(
                 currentYaw,
                 targetYaw,
                 ref _horizontalRotationVelocity,
-                rotationSmoothTime
+                _cameraController3CParams.rotationSmoothTime
             );
             finalTargetYaw = targetYaw;
         }
@@ -120,15 +119,15 @@ public class CameraController3C : MonoBehaviour
         var finalTargetPitch = currentPitch;
         if (Mathf.Abs(_inputData.lookInput.y) > 0.01f)
         {
-            var targetPitch = currentPitch - _inputData.lookInput.y * mouseSensitivity;
+            var targetPitch = currentPitch - _inputData.lookInput.y * _cameraController3CParams.mouseSensitivity;
             targetPitch = Mathf.SmoothDampAngle(
                 currentPitch,
                 targetPitch,
                 ref _verticalRotationVelocity,
-                rotationSmoothTime
+                _cameraController3CParams.rotationSmoothTime
             );
 
-            finalTargetPitch = Mathf.Clamp(targetPitch, minVerticalAngle, maxVerticalAngle);
+            finalTargetPitch = Mathf.Clamp(targetPitch, _cameraController3CParams.minVerticalAngle, _cameraController3CParams.maxVerticalAngle);
         }
 
         // 应用旋转到摄像机
@@ -140,15 +139,16 @@ public class CameraController3C : MonoBehaviour
     private void HandleFollow()
     {
         if (target == null) return;
+        if (_cameraController3CParams == null) return;
 
 
         if(Mathf.Abs(_inputData.zoomInput) > 0.01f)
         {
-            currentTargetZoom -= _inputData.zoomInput * zoomSensitivity;
-            currentTargetZoom = Mathf.Clamp(currentTargetZoom, minZoom, maxZoom);
+            currentTargetZoom -= _inputData.zoomInput * _cameraController3CParams.zoomSensitivity;
+            currentTargetZoom = Mathf.Clamp(currentTargetZoom, _cameraController3CParams.minZoom, _cameraController3CParams.maxZoom);
         }
 
-        currentZoom = Mathf.Lerp(currentZoom, currentTargetZoom, Time.deltaTime * zoomSmoothFactor);
+        currentZoom = Mathf.Lerp(currentZoom, currentTargetZoom, Time.deltaTime * _cameraController3CParams.zoomSmoothFactor);
 
         // 计算目标位置
         Vector3 targetPosition = target.position - transform.forward * currentZoom;

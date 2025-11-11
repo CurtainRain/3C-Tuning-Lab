@@ -560,14 +560,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   target: {fileID: 1195246488}
-  rotationSmoothTime: 0.1
-  zoomSmoothFactor: 6
-  mouseSensitivity: 24
-  minVerticalAngle: -90
-  maxVerticalAngle: 90
-  zoomSensitivity: 20
-  minZoom: 1
-  maxZoom: 30
+  _cameraController3CParams: {fileID: 11400000, guid: 19eb4b521d1283c4e99ab96b6c76a526, type: 2}
 --- !u!1 &1195246482
 GameObject:
   m_ObjectHideFlags: 0
@@ -600,10 +593,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 29cef5db1187cd545b8a5d114ede71d0, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  walkSpeed: 5
-  sprintSpeed: 8
-  jumpHeight: 0.5
-  gravity: -9.81
+  _characterController3CParams: {fileID: 11400000, guid: 4ec8765fab3dd2847b69045ba51ebb0e, type: 2}
   cameraTransform: {fileID: 0}
 --- !u!143 &1195246484
 CharacterController:
@@ -708,7 +698,6 @@ GameObject:
   - component: {fileID: 1247767351}
   - component: {fileID: 1247767350}
   - component: {fileID: 1247767349}
-  - component: {fileID: 1247767352}
   m_Layer: 0
   m_Name: InputManager
   m_TagString: Untagged
@@ -756,27 +745,6 @@ Transform:
   m_Children: []
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!114 &1247767352
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1247767348}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 8fc42ab8be886c741b942dcb59c00015, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  target: {fileID: 0}
-  rotationSmoothTime: 0.1
-  zoomSmoothFactor: 1
-  mouseSensitivity: 2
-  minVerticalAngle: -80
-  maxVerticalAngle: 80
-  zoomSensitivity: 1
-  minZoom: 10
-  maxZoom: 30
 --- !u!1 &1870502956
 GameObject:
   m_ObjectHideFlags: 0
