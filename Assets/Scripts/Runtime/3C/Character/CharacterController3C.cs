@@ -21,8 +21,11 @@ public class CharacterController3C : MonoBehaviour
     private float _carrentYawSpeed;
     private float _carrentYawSpeedVelocity;
 
-    // 输入数据引用（由 InputHandler 设置）
-    private InputData _inputData = InputData.Empty;
+    // 可供消费的输入状态
+    private Vector2 moveInput;      // 移动输入（WASD/左摇杆）
+    private bool jumpPressed;       // 跳跃按下
+    private bool sprintHeld;        // 冲刺按住
+
 
     private InputHandler _inputHandler;
 
@@ -67,10 +70,14 @@ public class CharacterController3C : MonoBehaviour
     /// </summary>
     private void OnInputReceived(InputData inputData)
     {
-        _inputData = inputData;
+        moveInput = inputData.moveInput;
+        sprintHeld  = inputData.sprintHeld;
+
+        // 瞬时输入需要累加 并在FixedUpdate中消费
+        jumpPressed |= inputData.jumpPressed;
     }
 
-    private void Update()
+    private void FixedUpdate()
     {
         if (_characterController3CParams == null) return;
 
@@ -84,24 +91,24 @@ public class CharacterController3C : MonoBehaviour
         ApplyGravity();
 
         // 应用移动
-        _characterController.Move(_velocity * Time.deltaTime);
+        _characterController.Move(_velocity * Time.fixedDeltaTime);
     }
 
     private void HandleMovement()
     {
         // 根据是否冲刺选择速度
-        _currentSpeed = _inputData.sprintHeld ? _characterController3CParams.sprintSpeed : _characterController3CParams.walkSpeed;
+        _currentSpeed = sprintHeld ? _characterController3CParams.sprintSpeed : _characterController3CParams.walkSpeed;
 
         // 走动的时候 以摄像机面朝平面方向转换为世界空间方向
         Vector3 moveDirection = Vector3.zero;
         float targetYaw = _carrentYawSpeed;
-        if(cameraTransform != null && (Mathf.Abs(_inputData.moveInput.x) > 0.01f || Mathf.Abs(_inputData.moveInput.y) > 0.01f))
+        if(cameraTransform != null && (Mathf.Abs(moveInput.x) > 0.01f || Mathf.Abs(moveInput.y) > 0.01f))
         {
             // 调整朝向
             targetYaw = cameraTransform.eulerAngles.y;
 
             // 计算移动方向
-            moveDirection = transform.right * _inputData.moveInput.x + transform.forward * _inputData.moveInput.y;
+            moveDirection = transform.right * moveInput.x + transform.forward * moveInput.y;
         }
 
         _carrentYawSpeed = Mathf.SmoothDampAngle(_carrentYawSpeed, targetYaw, ref _carrentYawSpeedVelocity, 0.1f);
@@ -114,14 +121,16 @@ public class CharacterController3C : MonoBehaviour
 
     private void HandleJump()
     {
-        if (_inputData.jumpPressed)
+        if (jumpPressed)
         {
             _velocity.y = Mathf.Sqrt(_characterController3CParams.jumpHeight * -2f * Physics.gravity.y * _characterController3CParams.gravityFactor);
+            jumpPressed = false;
         }
+
     }
 
     private void ApplyGravity()
     {
-        _velocity.y += Physics.gravity.y * _characterController3CParams.gravityFactor * Time.deltaTime;
+        _velocity.y += Physics.gravity.y * _characterController3CParams.gravityFactor * Time.fixedDeltaTime;
     }
 }

@@ -23,8 +23,11 @@ public class CameraController3C : MonoBehaviour
 
     private float currentTargetZoom = 20f;
 
-    // 输入数据引用（由 InputHandler 设置）
-    private InputData _inputData;
+    // 可供消费的输入状态
+    private Vector2 lookInput;      // 视角输入（鼠标/右摇杆）
+    private float zoomInput;        // 缩放输入（鼠标滚轮）
+
+    private bool _isPlayMode = true; //  区分 游玩/录制回放 模式
 
     private InputHandler _inputHandler;
 
@@ -79,12 +82,20 @@ public class CameraController3C : MonoBehaviour
         }
     }
 
+    private void FixedUpdate()
+    {
+        if (!_isPlayMode){
+            HandleFollow(Time.fixedDeltaTime);
+        }
+    }
+
     /// <summary>
     /// 接收输入数据（由 InputHandler 调用）
     /// </summary>
     private void OnInputReceived(InputData inputData)
     {
-        _inputData = inputData;
+        lookInput = inputData.lookInput;
+        zoomInput = inputData.zoomInput;
     }
 
     private void LateUpdate()
@@ -93,19 +104,21 @@ public class CameraController3C : MonoBehaviour
         if (_cameraController3CParams == null) return;
 
         // 处理视角旋转
-        HandleRotation();
+        if (_isPlayMode){
+            HandleRotation();
+        }
 
         // 处理摄像机跟随
-        HandleFollow();
+        HandleFollow(Time.deltaTime);
     }
 
     private void HandleRotation()
     {
         // 水平旋转（Y轴）
         var finalTargetYaw = currentYaw;
-        if (Mathf.Abs(_inputData.lookInput.x) > 0.01f)
+        if (Mathf.Abs(lookInput.x) > 0.01f)
         {
-            var targetYaw = currentYaw + _inputData.lookInput.x * _cameraController3CParams.mouseSensitivity;
+            var targetYaw = currentYaw + lookInput.x * _cameraController3CParams.mouseSensitivity;
             targetYaw = Mathf.SmoothDampAngle(
                 currentYaw,
                 targetYaw,
@@ -117,9 +130,9 @@ public class CameraController3C : MonoBehaviour
 
         // 垂直旋转（X轴）
         var finalTargetPitch = currentPitch;
-        if (Mathf.Abs(_inputData.lookInput.y) > 0.01f)
+        if (Mathf.Abs(lookInput.y) > 0.01f)
         {
-            var targetPitch = currentPitch - _inputData.lookInput.y * _cameraController3CParams.mouseSensitivity;
+            var targetPitch = currentPitch - lookInput.y * _cameraController3CParams.mouseSensitivity;
             targetPitch = Mathf.SmoothDampAngle(
                 currentPitch,
                 targetPitch,
@@ -136,19 +149,19 @@ public class CameraController3C : MonoBehaviour
         transform.rotation = Quaternion.Euler(currentPitch, currentYaw, 0);
     }
 
-    private void HandleFollow()
+    private void HandleFollow(float dt)
     {
         if (target == null) return;
         if (_cameraController3CParams == null) return;
 
 
-        if(Mathf.Abs(_inputData.zoomInput) > 0.01f)
+        if(Mathf.Abs(zoomInput) > 0.01f)
         {
-            currentTargetZoom -= _inputData.zoomInput * _cameraController3CParams.zoomSensitivity;
+            currentTargetZoom -= zoomInput * _cameraController3CParams.zoomSensitivity;
             currentTargetZoom = Mathf.Clamp(currentTargetZoom, _cameraController3CParams.minZoom, _cameraController3CParams.maxZoom);
         }
 
-        currentZoom = Mathf.Lerp(currentZoom, currentTargetZoom, Time.deltaTime * _cameraController3CParams.zoomSmoothFactor);
+        currentZoom = Mathf.Lerp(currentZoom, currentTargetZoom, dt * _cameraController3CParams.zoomSmoothFactor);
 
         // 计算目标位置
         Vector3 targetPosition = target.position - transform.forward * currentZoom;
