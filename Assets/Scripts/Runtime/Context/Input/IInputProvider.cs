@@ -7,6 +7,16 @@ using UnityEngine;
 public interface IInputProvider
 {
     /// <summary>
+    /// 初始化
+    /// </summary>
+    void Init();
+
+    /// <summary>
+    /// 销毁
+    /// </summary>
+    void Destroy();
+
+    /// <summary>
     /// 获取移动输入（归一化的方向向量）
     /// </summary>
     Vector2 GetMoveInput();
@@ -35,4 +45,14 @@ public interface IInputProvider
     /// 是否按下交互键
     /// </summary>
     bool GetInteractInput();
+
+    /// <summary>
+    /// 是否按下录制开始键
+    /// </summary>
+    bool GetRecordModeInput();
+
+    /// <summary>
+    /// 是否按下录制回放键
+    /// </summary>
+    bool GetRecordPlaybackInput();
 }

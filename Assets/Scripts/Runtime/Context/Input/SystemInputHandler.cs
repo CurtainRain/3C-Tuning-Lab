@@ -4,43 +4,40 @@ using UnityEngine;
 /// 输入处理器，负责收集所有输入并转换为 InputData
 /// 作为输入层和逻辑层之间的桥梁
 /// </summary>
-public class InputHandler : MonoBehaviour
+public class SystemInputHandler
 {
-    [Header("输入提供者")]
-    [SerializeField] private MonoBehaviour inputProvider;
-
     private IInputProvider _inputProvider;
-    private InputData _currentInput;
+    private SystemInputData _currentInput;
 
     // 事件：当输入更新时触发
-    public System.Action<InputData> OnInputUpdated;
+    public System.Action<SystemInputData> OnInputUpdated;
 
-
-    private void Awake()
+    public void Init(IInputProvider inputProvider)
     {
-        if( inputProvider == null || !(inputProvider is IInputProvider provider)){
+        if(inputProvider == null){
             Debug.LogError("InputHandler: 未找到输入提供者！请添加 KeyboardMouseInputProvider 或其他实现了 IInputProvider 的组件。");
             return;
         }
 
-        _inputProvider = provider;
+        _inputProvider = inputProvider;
     }
 
+    public void Destroy()
+    {
+        _inputProvider = null;
+        OnInputUpdated = null;
+    }
 
-    private void Update()
+    public void Tick()
     {
         // 每帧更新输入数据
         if (_inputProvider == null) return;
 
         // 收集所有输入
-        _currentInput = new InputData
+        _currentInput = new SystemInputData
         {
-            moveInput = _inputProvider.GetMoveInput(),
-            lookInput = _inputProvider.GetLookInput(),
-            zoomInput = _inputProvider.GetZoomInput(),
-            jumpPressed = _inputProvider.GetJumpInput(),
-            sprintHeld = _inputProvider.GetSprintInput(),
-            interactPressed = _inputProvider.GetInteractInput()
+            recordModePressed = _inputProvider.GetRecordModeInput(),
+            recordPlaybackPressed = _inputProvider.GetRecordPlaybackInput()
         };
 
         // 通知输入更新
@@ -50,7 +47,7 @@ public class InputHandler : MonoBehaviour
     /// <summary>
     /// 获取当前输入数据（供其他组件主动读取）
     /// </summary>
-    public InputData GetInputData()
+    public SystemInputData GetInputData()
     {
         return _currentInput;
     }

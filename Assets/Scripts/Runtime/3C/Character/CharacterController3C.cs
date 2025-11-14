@@ -27,7 +27,8 @@ public class CharacterController3C : MonoBehaviour
     private bool sprintHeld;        // 冲刺按住
 
 
-    private InputHandler _inputHandler;
+    private PlayerInputHandler _inputHandler;
+    private RecordPlaybackInputHandler _recordPlaybackInputHandler;
 
     private void Awake()
     {
@@ -37,10 +38,18 @@ public class CharacterController3C : MonoBehaviour
     private void Start()
     {
         // 查找 InputHandler
-        _inputHandler = FindObjectOfType<InputHandler>();
+        _inputHandler = GameRuntimeContext.Instance.playerInputHandler;
+        _recordPlaybackInputHandler = GameRuntimeContext.Instance.recordPlaybackInputHandler;
+
         if (_inputHandler == null)
         {
             Debug.LogError("CharacterController3C: 未找到 InputHandler，将无法接收输入！");
+            return;
+        }
+
+        if(_recordPlaybackInputHandler == null)
+        {
+            Debug.LogError("CharacterController3C: 未找到 RecordPlaybackInputHandler，将无法接收输入！");
             return;
         }
 
@@ -53,6 +62,7 @@ public class CharacterController3C : MonoBehaviour
         // 订阅输入更新事件
         Debug.Log("CharacterController3C: 找到 InputHandler，订阅输入更新事件");
         _inputHandler.OnInputUpdated += OnInputReceived;
+        _recordPlaybackInputHandler.OnInputUpdated += OnInputReceived;
     }
 
     private void OnDestroy()
@@ -63,12 +73,18 @@ public class CharacterController3C : MonoBehaviour
             _inputHandler.OnInputUpdated -= OnInputReceived;
             _inputHandler = null;
         }
+
+        if(_recordPlaybackInputHandler != null)
+        {
+            _recordPlaybackInputHandler.OnInputUpdated -= OnInputReceived;
+            _recordPlaybackInputHandler = null;
+        }
     }
 
     /// <summary>
     /// 接收输入数据（由 InputHandler 调用）
     /// </summary>
-    private void OnInputReceived(InputData inputData)
+    private void OnInputReceived(PlayerInputData inputData)
     {
         moveInput = inputData.moveInput;
         sprintHeld  = inputData.sprintHeld;

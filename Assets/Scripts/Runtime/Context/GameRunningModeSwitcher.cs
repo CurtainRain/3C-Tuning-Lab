@@ -1,0 +1,89 @@
+using Unity.VisualScripting;
+using UnityEngine;
+using Runtime.Const.Enums;
+
+/// <summary>
+/// 3C 摄像机控制器
+/// 负责处理摄像机跟随和旋转逻辑
+/// 不直接读取输入，而是通过 InputHandler 获取输入数据
+/// </summary>
+public class GameRunningModeSwitcher
+{
+    private SystemInputHandler _systemInputHandler;
+    public GameRunningMode currentRunningMode { get; private set; } = GameRunningMode.PlayMode;
+
+    public void Init(SystemInputHandler systemInputHandler)
+    {
+        _systemInputHandler =systemInputHandler ;
+
+
+        if (_systemInputHandler == null)
+        {
+            Debug.LogError("GameRunningModeSwitcher: 未找到 SystemInputHandler，将无法接收输入！");
+            return;
+        }
+
+        _systemInputHandler.OnInputUpdated += OnInputReceived;
+    }
+
+    public void Destroy()
+    {
+        // 取消订阅
+        if (_systemInputHandler != null)
+        {
+            _systemInputHandler.OnInputUpdated -= OnInputReceived;
+            _systemInputHandler = null;
+        }
+    }
+
+    public void SwitchToMode(GameRunningMode gameRunningMode)
+    {
+        Debug.Log("GameRunningModeSwitcher: 退出模式: " + currentRunningMode);
+        currentRunningMode = gameRunningMode;
+        Debug.Log("GameRunningModeSwitcher: 进入模式: " + gameRunningMode);
+    }
+
+    /// <summary>
+    /// 接收输入数据（由 InputHandler 调用）
+    /// </summary>
+    private void OnInputReceived(SystemInputData inputData)
+    {
+        if(inputData.recordModePressed)
+        {
+            if(currentRunningMode == GameRunningMode.PlayMode)
+            {
+                SwitchToMode(GameRunningMode.RecordMode);
+                return;
+            }
+            else if(currentRunningMode == GameRunningMode.RecordMode)
+            {
+                SwitchToMode(GameRunningMode.PlayMode);
+                return;
+            }
+            else
+            {
+                Debug.Log("当前所处模式互斥，无法切换到录制模式，当前模式为：" + currentRunningMode);
+                return;
+            }
+        }
+
+        if(inputData.recordPlaybackPressed)
+        {
+            if(currentRunningMode == GameRunningMode.PlayMode)
+            {
+                SwitchToMode(GameRunningMode.RecordPlaybackMode);
+                return;
+            }
+            else if(currentRunningMode == GameRunningMode.RecordPlaybackMode)
+            {
+                SwitchToMode(GameRunningMode.PlayMode);
+                return;
+            }
+            else
+            {
+                Debug.Log("当前所处模式互斥，无法切换到录制回放模式，当前模式为：" + currentRunningMode);
+                return;
+            }
+        }
+    }
+}
