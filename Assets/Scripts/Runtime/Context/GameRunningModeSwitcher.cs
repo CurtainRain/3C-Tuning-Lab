@@ -3,9 +3,8 @@ using UnityEngine;
 using Runtime.Const.Enums;
 
 /// <summary>
-/// 3C 摄像机控制器
-/// 负责处理摄像机跟随和旋转逻辑
-/// 不直接读取输入，而是通过 InputHandler 获取输入数据
+/// 游戏模式切换器
+/// 负责处理游戏模式切换逻辑
 /// </summary>
 public class GameRunningModeSwitcher
 {

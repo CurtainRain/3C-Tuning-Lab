@@ -149,4 +149,16 @@ public class CharacterController3C : MonoBehaviour
     {
         _velocity.y += Physics.gravity.y * _characterController3CParams.gravityFactor * Time.fixedDeltaTime;
     }
+
+    public DataOf3C_Player GetData(){
+        return new DataOf3C_Player{
+            position = transform.position,
+            rotation = transform.rotation,
+            velocity = _velocity
+        };
+    }
+
+    public string getPresetName(){
+        return _characterController3CParams.name;
+    }
 }

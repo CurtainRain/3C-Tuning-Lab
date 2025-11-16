@@ -12,6 +12,7 @@ public class GameRuntimeContext : MonoBehaviour
 
     // 基础服务
     public StorageService storageService;
+    public Output3CDataByCSVService output3CDataByCSVService;
 
     // 游戏模式
     public GameRunningModeSwitcher gameRunningModeSwitcher;
@@ -40,7 +41,9 @@ public class GameRuntimeContext : MonoBehaviour
 
         Instance = this;
 
-        storageService = new StorageService(Application.temporaryCachePath);
+        storageService = new StorageService(Application.persistentDataPath);
+        output3CDataByCSVService = new Output3CDataByCSVService();
+        output3CDataByCSVService.Init(this);
 
         inputProvider = new KeyboardMouseInputProvider();
         inputProvider.Init();
@@ -92,6 +95,11 @@ public class GameRuntimeContext : MonoBehaviour
         if(inputProvider != null){
             inputProvider.Destroy();
             inputProvider = null;
+        }
+
+        if(output3CDataByCSVService != null){
+            output3CDataByCSVService.Destroy();
+            output3CDataByCSVService = null;
         }
 
         storageService = null;

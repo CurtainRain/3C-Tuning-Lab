@@ -17,6 +17,7 @@ public class StorageService
            throw new ArgumentException("basePath 不能为空", nameof(basePath));
         }
 
+        Debug.Log("StorageService: basePath = " + basePath);
         _basePath = basePath;
     }
 

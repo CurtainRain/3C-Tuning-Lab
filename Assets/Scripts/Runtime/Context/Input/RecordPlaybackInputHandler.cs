@@ -14,7 +14,7 @@ public class PlayerInputDataCollection{
 /// </summary>
 public class RecordPlaybackInputHandler
 {
-    public static string RecordFilePath = "Record.txt";
+    public static string RecordFilePath = "Records/Record.txt";
 
     // 事件：当输入更新时触发
     public System.Action<PlayerInputData> OnInputUpdated;
@@ -71,12 +71,12 @@ public class RecordPlaybackInputHandler
       private List<PlayerInputData> ReadInputDataFromFile(){
         var inputDataCollection = _gameRuntimeContext.storageService.LoadJson<PlayerInputDataCollection>(RecordPlaybackInputHandler.RecordFilePath);
         if(inputDataCollection == null){
-            Debug.LogError("RecordPlaybackInputHandler: 读取输入数据失败");
+            Debug.Log("RecordPlaybackInputHandler: 读取输入数据失败, 返回空列表");
+            return new List<PlayerInputData>();
         }else{
             Debug.Log("RecordPlaybackInputHandler: 读取输入数据成功, 数据量: " + inputDataCollection.inputDatas.Count);
+            return inputDataCollection.inputDatas;
         }
-
-        return inputDataCollection.inputDatas;
     }
 
     /// <summary>

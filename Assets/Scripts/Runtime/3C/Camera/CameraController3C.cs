@@ -1,3 +1,4 @@
+using Runtime.Const.Enums;
 using Unity.VisualScripting;
 using UnityEngine;
 
@@ -27,7 +28,6 @@ public class CameraController3C : MonoBehaviour
     private Vector2 lookInput;      // 视角输入（鼠标/右摇杆）
     private float zoomInput;        // 缩放输入（鼠标滚轮）
 
-    private bool _isPlayMode = true; //  区分 游玩/录制回放 模式
 
     private PlayerInputHandler _inputHandler;
     private RecordPlaybackInputHandler _recordPlaybackInputHandler;
@@ -99,8 +99,12 @@ public class CameraController3C : MonoBehaviour
 
     private void FixedUpdate()
     {
-        if (!_isPlayMode){
-            HandleFollow(Time.fixedDeltaTime);
+        if (GameRuntimeContext.Instance.gameRunningModeSwitcher.currentRunningMode != GameRunningMode.PlayMode){
+            HandleRotation();
+
+            if(GameRuntimeContext.Instance.gameRunningModeSwitcher.currentRunningMode == GameRunningMode.RecordPlaybackMode){
+
+            }
         }
     }
 
@@ -119,7 +123,7 @@ public class CameraController3C : MonoBehaviour
         if (_cameraController3CParams == null) return;
 
         // 处理视角旋转
-        if (_isPlayMode){
+        if (GameRuntimeContext.Instance.gameRunningModeSwitcher.currentRunningMode == GameRunningMode.PlayMode){
             HandleRotation();
         }
 
@@ -203,5 +207,17 @@ public class CameraController3C : MonoBehaviour
         transform.position = target.position - transform.forward * currentZoom;
         currentYaw = transform.eulerAngles.y;
         currentPitch = transform.eulerAngles.x;
+    }
+
+    public DataOf3C_Camera GetData(){
+        return new DataOf3C_Camera{
+            position = transform.position,
+            rotation = transform.rotation,
+            zoom = currentZoom
+        };
+    }
+
+    public string getPresetName(){
+        return _cameraController3CParams.name;
     }
 }
