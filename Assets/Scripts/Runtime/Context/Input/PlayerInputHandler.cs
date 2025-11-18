@@ -1,5 +1,3 @@
-using System.Collections.Generic;
-using Runtime.Const.Enums;
 using UnityEngine;
 
 /// <summary>
@@ -9,13 +7,7 @@ using UnityEngine;
 public class PlayerInputHandler
 {
     private PlayerInputData _currentInput;
-    private List<PlayerInputData> _recordByInputDatas = new List<PlayerInputData>();
     private GameRuntimeContext _gameRuntimeContext;
-    private bool _isRecording = false;
-
-    // 事件：当输入更新时触发
-    public System.Action<PlayerInputData> OnInputUpdated;
-
 
     public void Init(GameRuntimeContext gameRuntimeContext)
     {
@@ -29,7 +21,6 @@ public class PlayerInputHandler
     public void Destroy()
     {
         _gameRuntimeContext = null;
-        OnInputUpdated = null;
     }
 
 
@@ -48,35 +39,8 @@ public class PlayerInputHandler
             sprintHeld = _gameRuntimeContext.inputProvider.GetSprintInput(),
             interactPressed = _gameRuntimeContext.inputProvider.GetInteractInput(),
         };
-
-        UpdateRecord();
-
-        if (_gameRuntimeContext.gameRunningModeSwitcher.currentRunningMode != GameRunningMode.RecordPlaybackMode){
-            // 如果当前模式非回放模式，则通知输入更新
-            OnInputUpdated?.Invoke(_currentInput);
-        }
     }
 
-    private void UpdateRecord(){
-        if(_gameRuntimeContext.gameRunningModeSwitcher.currentRunningMode != GameRunningMode.RecordMode){
-            if(_isRecording){
-                this.SaveInputDataToFile(_recordByInputDatas);
-                _recordByInputDatas.Clear();
-            }
-
-            _isRecording = false;
-            return;
-        }
-
-
-        _recordByInputDatas.Add(_currentInput);
-        _isRecording = true;
-    }
-
-    private void SaveInputDataToFile(List<PlayerInputData> inputDatas){
-        _gameRuntimeContext.storageService.SaveJson(RecordPlaybackInputHandler.RecordFilePath, new PlayerInputDataCollection{ inputDatas = inputDatas }, true, true);
-        Debug.Log("PlayerInputHandler: 数据保存成功, 数据量: " + inputDatas.Count);
-    }
 
     /// <summary>
     /// 获取当前输入数据（供其他组件主动读取）

@@ -8,7 +8,7 @@ using UnityEngine;
 /// </summary>
 public class MovementOutputer : MonoBehaviour
 {
-    [Header("角色设置")]
+    [Header("3C组件")]
     [SerializeField] private CharacterController3C _characterController3C;
     [SerializeField] private CameraController3C _cameraController3C;
 
@@ -44,6 +44,7 @@ public class MovementOutputer : MonoBehaviour
 
     private IEnumerator RecordLoop()
     {
+        //c-mark:帧末是协程 无法通过脚本顺序 避免打架需要统一放在context里执行
         while (true)
         {
             yield return new WaitForEndOfFrame();  // 等所有 LateUpdate 结束
@@ -67,11 +68,13 @@ public class MovementOutputer : MonoBehaviour
     {
         var cameraData = _cameraController3C.GetData();
         var playerData = _characterController3C.GetData();
+        var inputData = GameRuntimeContext.Instance.GetInputData();
         var dataOf3C = new DataOf3C{
             frame = Time.frameCount,
             time = Time.time,
             camera = cameraData,
-            player = playerData
+            player = playerData,
+            input = inputData
         };
         GameRuntimeContext.Instance.output3CDataByCSVService.AddDataToOutput3CData(dataOf3C);
     }

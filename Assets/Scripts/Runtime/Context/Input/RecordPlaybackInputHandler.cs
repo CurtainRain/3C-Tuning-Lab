@@ -1,28 +1,20 @@
 using System.Collections.Generic;
 using Runtime.Const.Enums;
+using Unity.VisualScripting;
 using UnityEngine;
-
-[System.Serializable]
-public class PlayerInputDataCollection{
-    public List<PlayerInputData> inputDatas = new List<PlayerInputData>(0);
-}
-
-
 
 /// <summary>
 /// 回放输入处理器，负责回播录制的输入数据
 /// </summary>
 public class RecordPlaybackInputHandler
 {
-    public static string RecordFilePath = "Records/Record.txt";
-
     // 事件：当输入更新时触发
-    public System.Action<PlayerInputData> OnInputUpdated;
+    public System.Action<PlayerInputDataCollection> OnPlaybackStart;
     private GameRuntimeContext _gameRuntimeContext;
     private bool _isPlaybacking = false;
-    private List<PlayerInputData> _recordByInputDatas = new List<PlayerInputData>();
+    private bool _isInitialized = false;
+    private PlayerInputDataCollection _recordByInputDatasCollection;
     private PlayerInputData _currentInput;
-
 
     public void Init(GameRuntimeContext gameRuntimeContext)
     {
@@ -36,47 +28,56 @@ public class RecordPlaybackInputHandler
     public void Destroy()
     {
         _gameRuntimeContext = null;
-        OnInputUpdated = null;
+        OnPlaybackStart = null;
+    }
+
+    public void Tick(){
+        if(!_isPlaybacking || _isInitialized){
+            return;
+        }
+        _isInitialized = true;
+        OnPlaybackStart?.Invoke(_recordByInputDatasCollection);
     }
 
 
-    public void Tick()
+    public void OnFrameEnd()
     {
-        // 每帧更新输入数据
+        // 每帧末 为下一帧更新输入数据
         if(_gameRuntimeContext.gameRunningModeSwitcher.currentRunningMode != GameRunningMode.RecordPlaybackMode){
             _isPlaybacking = false;
             return;
         }
 
         if(!_isPlaybacking){
-            var recordByInputDatas = ReadInputDataFromFile();
-            if(recordByInputDatas!=null){
-                _recordByInputDatas = recordByInputDatas;
-            }
+            StartPlayback();
+            _isPlaybacking = true;
+            _isInitialized = false;
+        }else{
+            UpdatePlayback();
         }
 
-        if(_recordByInputDatas.Count == 0){
-            _gameRuntimeContext.gameRunningModeSwitcher.SwitchToMode(GameRunningMode.PlayMode);
-            _isPlaybacking = false;
-            return;
+        if(_recordByInputDatasCollection.inputDatas.Count == 0){
+            EndPlayback();
         }
-
-        _isPlaybacking = true;
-        var item = _recordByInputDatas[0];
-        _recordByInputDatas.RemoveAt(0);
-        _currentInput = item;
-        OnInputUpdated?.Invoke(_currentInput);
     }
 
-      private List<PlayerInputData> ReadInputDataFromFile(){
-        var inputDataCollection = _gameRuntimeContext.storageService.LoadJson<PlayerInputDataCollection>(RecordPlaybackInputHandler.RecordFilePath);
-        if(inputDataCollection == null){
-            Debug.Log("RecordPlaybackInputHandler: 读取输入数据失败, 返回空列表");
-            return new List<PlayerInputData>();
+    void StartPlayback(){
+        var collection = _gameRuntimeContext.iOPlayerInputDataService.GetInputDataCollection();
+        if(collection != null && collection.inputDatas != null){
+            _recordByInputDatasCollection = collection;
         }else{
-            Debug.Log("RecordPlaybackInputHandler: 读取输入数据成功, 数据量: " + inputDataCollection.inputDatas.Count);
-            return inputDataCollection.inputDatas;
+            Debug.LogError("RecordPlaybackInputHandler: 未能读取录制数据, 无法回放");
         }
+    }
+
+    void UpdatePlayback(){
+        var item = _recordByInputDatasCollection.inputDatas[0];
+        _recordByInputDatasCollection.inputDatas.RemoveAt(0);
+        _currentInput = item;
+    }
+
+    void EndPlayback(){
+        _gameRuntimeContext.gameRunningModeSwitcher.SwitchToMode(GameRunningMode.PlayMode);
     }
 
     /// <summary>

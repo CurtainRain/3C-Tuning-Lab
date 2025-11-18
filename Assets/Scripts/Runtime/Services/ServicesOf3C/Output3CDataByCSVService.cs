@@ -11,12 +11,11 @@ using System.Text;
 /// </summary>
 public class Output3CDataByCSVService
 {
-
     private DatasOf3C _datasOf3C;
     private GameRuntimeContext _gameRuntimeContext;
     private string _presetName;
 
-    public static string RecordFolderPath = "Records";
+    public static string RecordFolderPath = "MovementRecords";
     public static string RecordFileNameTemplate = "Record_";
     public static string RecordFileExtension = ".csv";
 
@@ -107,7 +106,16 @@ public class Output3CDataByCSVService
 
         ("PlayerVelX", d => d.player.velocity.x.ToString(_formatString, _csvCulture)),
         ("PlayerVelY", d => d.player.velocity.y.ToString(_formatString, _csvCulture)),
-        ("PlayerVelZ", d => d.player.velocity.z.ToString(_formatString, _csvCulture))
+        ("PlayerVelZ", d => d.player.velocity.z.ToString(_formatString, _csvCulture)),
+
+        ("Input_JumpPressed", d => d.input.jumpPressed.ToString()),
+        ("Input_SprintHeld", d => d.input.sprintHeld.ToString()),
+        ("Input_InteractPressed", d => d.input.interactPressed.ToString()),
+        ("Input_MoveInputX", d => d.input.moveInput.x.ToString(_formatString, _csvCulture)),
+        ("Input_MoveInputY", d => d.input.moveInput.y.ToString(_formatString, _csvCulture)),
+        ("Input_LookInputX", d => d.input.lookInput.x.ToString(_formatString, _csvCulture)),
+        ("Input_LookInputY", d => d.input.lookInput.y.ToString(_formatString, _csvCulture)),
+        ("Input_ZoomInput", d => d.input.zoomInput.ToString(_formatString, _csvCulture)),
     };
 
     private string BuildCSV(DatasOf3C datas){

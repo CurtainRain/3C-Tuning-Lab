@@ -21,12 +21,7 @@ public class CameraController3C : MonoBehaviour
     private float currentYaw = 0f;
     private float currentPitch = 0f;
     private float currentZoom = 20f;
-
     private float currentTargetZoom = 20f;
-
-    // 可供消费的输入状态
-    private Vector2 lookInput;      // 视角输入（鼠标/右摇杆）
-    private float zoomInput;        // 缩放输入（鼠标滚轮）
 
 
     private PlayerInputHandler _inputHandler;
@@ -76,9 +71,8 @@ public class CameraController3C : MonoBehaviour
         currentPitch = transform.eulerAngles.x;
 
 
-        // 查找 InputHandler 并订阅输入更新事件
-        _inputHandler.OnInputUpdated += OnInputReceived;
-        _recordPlaybackInputHandler.OnInputUpdated += OnInputReceived;
+        // 注册回放开始监听
+        _recordPlaybackInputHandler.OnPlaybackStart += OnPlaybackStartReceived;
     }
 
     private void OnDestroy()
@@ -86,52 +80,51 @@ public class CameraController3C : MonoBehaviour
         // 取消订阅
         if (_inputHandler != null)
         {
-            _inputHandler.OnInputUpdated -= OnInputReceived;
             _inputHandler = null;
         }
 
         if (_recordPlaybackInputHandler != null)
         {
-            _recordPlaybackInputHandler.OnInputUpdated -= OnInputReceived;
+            _recordPlaybackInputHandler.OnPlaybackStart -= OnPlaybackStartReceived;
             _recordPlaybackInputHandler = null;
         }
+    }
+
+    private void OnPlaybackStartReceived(PlayerInputDataCollection collection){
+        var initialCameraData = collection.initialCameraData;
+        ApplyData(initialCameraData);
     }
 
     private void FixedUpdate()
     {
         if (GameRuntimeContext.Instance.gameRunningModeSwitcher.currentRunningMode != GameRunningMode.PlayMode){
-            HandleRotation();
+            var inputData = GameRuntimeContext.Instance.GetInputData();
+            var lookInput = inputData.lookInput;
 
-            if(GameRuntimeContext.Instance.gameRunningModeSwitcher.currentRunningMode == GameRunningMode.RecordPlaybackMode){
-
-            }
+            HandleRotation(lookInput);
         }
     }
 
-    /// <summary>
-    /// 接收输入数据（由 InputHandler 调用）
-    /// </summary>
-    private void OnInputReceived(PlayerInputData inputData)
-    {
-        lookInput = inputData.lookInput;
-        zoomInput = inputData.zoomInput;
-    }
 
     private void LateUpdate()
     {
         if (target == null) return;
         if (_cameraController3CParams == null) return;
 
+        var inputData = GameRuntimeContext.Instance.GetInputData();
+        var lookInput = inputData.lookInput;
+        var zoomInput = inputData.zoomInput;
+
         // 处理视角旋转
         if (GameRuntimeContext.Instance.gameRunningModeSwitcher.currentRunningMode == GameRunningMode.PlayMode){
-            HandleRotation();
+            HandleRotation(lookInput);
         }
 
         // 处理摄像机跟随
-        HandleFollow(Time.deltaTime);
+        HandleFollow(Time.deltaTime, zoomInput);
     }
 
-    private void HandleRotation()
+    private void HandleRotation(Vector3 lookInput)
     {
         // 水平旋转（Y轴）
         var finalTargetYaw = currentYaw;
@@ -168,7 +161,7 @@ public class CameraController3C : MonoBehaviour
         transform.rotation = Quaternion.Euler(currentPitch, currentYaw, 0);
     }
 
-    private void HandleFollow(float dt)
+    private void HandleFollow(float dt, float zoomInput)
     {
         if (target == null) return;
         if (_cameraController3CParams == null) return;
@@ -215,6 +208,20 @@ public class CameraController3C : MonoBehaviour
             rotation = transform.rotation,
             zoom = currentZoom
         };
+    }
+
+    private void ApplyData(DataOf3C_Camera data){
+        // 更新旋转相关的内部状态
+        currentYaw = data.rotation.eulerAngles.y;
+        currentPitch = data.rotation.eulerAngles.x;
+
+        // 更新缩放相关的内部状态
+        currentZoom = data.zoom;
+        currentTargetZoom = data.zoom;
+
+        // 应用旋转和位置
+        transform.rotation = data.rotation;
+        transform.position = data.position;
     }
 
     public string getPresetName(){

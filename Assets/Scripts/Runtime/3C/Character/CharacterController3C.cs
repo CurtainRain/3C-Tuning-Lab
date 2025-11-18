@@ -1,4 +1,5 @@
 using System;
+using Runtime.Const.Enums;
 using UnityEngine;
 
 /// <summary>
@@ -19,12 +20,13 @@ public class CharacterController3C : MonoBehaviour
     [HideInInspector] public Transform cameraTransform;
 
     private float _carrentYawSpeed;
-    private float _carrentYawSpeedVelocity;
+    private float _carrentYawSpeedVelocity = 0f;
 
     // 可供消费的输入状态
     private Vector2 moveInput;      // 移动输入（WASD/左摇杆）
     private bool jumpPressed;       // 跳跃按下
     private bool sprintHeld;        // 冲刺按住
+    private GameRunningMode lastFrameMode;
 
 
     private PlayerInputHandler _inputHandler;
@@ -59,10 +61,8 @@ public class CharacterController3C : MonoBehaviour
             return;
         }
 
-        // 订阅输入更新事件
-        Debug.Log("CharacterController3C: 找到 InputHandler，订阅输入更新事件");
-        _inputHandler.OnInputUpdated += OnInputReceived;
-        _recordPlaybackInputHandler.OnInputUpdated += OnInputReceived;
+        // 订阅回放开始事件
+        _recordPlaybackInputHandler.OnPlaybackStart += OnPlaybackStartReceived;
     }
 
     private void OnDestroy()
@@ -70,29 +70,38 @@ public class CharacterController3C : MonoBehaviour
         // 取消订阅
         if (_inputHandler != null)
         {
-            _inputHandler.OnInputUpdated -= OnInputReceived;
             _inputHandler = null;
         }
 
         if(_recordPlaybackInputHandler != null)
         {
-            _recordPlaybackInputHandler.OnInputUpdated -= OnInputReceived;
+            _recordPlaybackInputHandler.OnPlaybackStart -= OnPlaybackStartReceived;
             _recordPlaybackInputHandler = null;
         }
     }
 
-    /// <summary>
-    /// 接收输入数据（由 InputHandler 调用）
-    /// </summary>
-    private void OnInputReceived(PlayerInputData inputData)
-    {
-        moveInput = inputData.moveInput;
-        sprintHeld  = inputData.sprintHeld;
+    private void OnPlaybackStartReceived(PlayerInputDataCollection collection){
+        var initialPlayerData = collection.initialPlayerData;
+        ApplyData(initialPlayerData);
+    }
 
-        // 瞬时输入需要累加 并在FixedUpdate中消费
+
+    private void Update(){
+        PlayerInputData inputData = GameRuntimeContext.Instance.GetInputData();
+
+        if(lastFrameMode != GameRuntimeContext.Instance.gameRunningModeSwitcher.currentRunningMode){
+            // 更换模式 所以连续记录的状态需要重置
+            jumpPressed = false;
+        }
+
+
+        lastFrameMode = GameRuntimeContext.Instance.gameRunningModeSwitcher.currentRunningMode;
+        moveInput = inputData.moveInput;
+        sprintHeld = inputData.sprintHeld;
         jumpPressed |= inputData.jumpPressed;
     }
 
+    //c-mark:现在回放是不稳定的 虽然这里用了fix 但输入仍然在update的dt不一致 导致回放的时候速度不一致
     private void FixedUpdate()
     {
         if (_characterController3CParams == null) return;
@@ -156,6 +165,24 @@ public class CharacterController3C : MonoBehaviour
             rotation = transform.rotation,
             velocity = _velocity
         };
+    }
+
+    private void ApplyData(DataOf3C_Player data){
+        var wasEnabled = _characterController.enabled;
+        _characterController.enabled = false;
+
+        // 更新旋转相关的内部状态
+        _carrentYawSpeed = data.rotation.eulerAngles.y;
+        _carrentYawSpeedVelocity = 0f; // 重置插值速度，避免从旧值插值
+
+        // 更新速度状态
+        _velocity = data.velocity;
+
+        // 应用位置和旋转
+        transform.position = data.position;
+        transform.rotation = data.rotation;
+
+        _characterController.enabled = wasEnabled;
     }
 
     public string getPresetName(){
