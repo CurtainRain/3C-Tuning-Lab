@@ -106,8 +106,10 @@ public class CharacterController3C : MonoBehaviour
     {
         if (_characterController3CParams == null) return;
 
+        var dt = Time.fixedDeltaTime;
+
         // 处理移动
-        HandleMovement();
+        HandleMovement(dt);
 
         // 处理跳跃
         HandleJump();
@@ -116,10 +118,10 @@ public class CharacterController3C : MonoBehaviour
         ApplyGravity();
 
         // 应用移动
-        _characterController.Move(_velocity * Time.fixedDeltaTime);
+        _characterController.Move(_velocity * dt);
     }
 
-    private void HandleMovement()
+    private void HandleMovement(float dt)
     {
         // 根据是否冲刺选择速度
         _currentSpeed = sprintHeld ? _characterController3CParams.sprintSpeed : _characterController3CParams.walkSpeed;
@@ -136,7 +138,7 @@ public class CharacterController3C : MonoBehaviour
             moveDirection = transform.right * moveInput.x + transform.forward * moveInput.y;
         }
 
-        _carrentYawSpeed = Mathf.SmoothDampAngle(_carrentYawSpeed, targetYaw, ref _carrentYawSpeedVelocity, 0.1f);
+        _carrentYawSpeed = Mathf.SmoothDampAngle(_carrentYawSpeed, targetYaw, ref _carrentYawSpeedVelocity, 0.1f, float.PositiveInfinity, dt);
         transform.rotation = Quaternion.Euler(0, _carrentYawSpeed, 0);
 
         // 应用速度

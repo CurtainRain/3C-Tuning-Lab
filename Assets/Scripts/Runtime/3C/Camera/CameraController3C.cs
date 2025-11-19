@@ -9,6 +9,7 @@ using UnityEngine;
 /// </summary>
 public class CameraController3C : MonoBehaviour
 {
+    // c-mark:加一下射线追踪 避免在碰撞体内/地形下穿过去 此时需要在碰撞点前
     [Header("跟随目标")]
     [SerializeField] private Transform target; // 跟随的角色
 
@@ -18,10 +19,13 @@ public class CameraController3C : MonoBehaviour
     private float _verticalRotationVelocity;
     private float _horizontalRotationVelocity;
 
+    private float targetYaw = 0f;
+    private float targetPitch = 0f;
+    private float targetZoom = 20f;
+
     private float currentYaw = 0f;
     private float currentPitch = 0f;
     private float currentZoom = 20f;
-    private float currentTargetZoom = 20f;
 
 
     private PlayerInputHandler _inputHandler;
@@ -97,12 +101,10 @@ public class CameraController3C : MonoBehaviour
 
     private void FixedUpdate()
     {
-        if (GameRuntimeContext.Instance.gameRunningModeSwitcher.currentRunningMode != GameRunningMode.PlayMode){
-            var inputData = GameRuntimeContext.Instance.GetInputData();
-            var lookInput = inputData.lookInput;
-
-            HandleRotation(lookInput);
-        }
+        var inputData = GameRuntimeContext.Instance.GetInputData();
+        var lookInput = inputData.lookInput;
+        CalculateRotation(lookInput);
+        CalculateZoom(inputData.zoomInput);
     }
 
 
@@ -111,49 +113,47 @@ public class CameraController3C : MonoBehaviour
         if (target == null) return;
         if (_cameraController3CParams == null) return;
 
-        var inputData = GameRuntimeContext.Instance.GetInputData();
-        var lookInput = inputData.lookInput;
-        var zoomInput = inputData.zoomInput;
+        var dt = Time.deltaTime;
 
         // 处理视角旋转
-        if (GameRuntimeContext.Instance.gameRunningModeSwitcher.currentRunningMode == GameRunningMode.PlayMode){
-            HandleRotation(lookInput);
-        }
-
-        // 处理摄像机跟随
-        HandleFollow(Time.deltaTime, zoomInput);
+        HandleRot(dt);
+        HandleFollowAndZoom(dt);
     }
 
-    private void HandleRotation(Vector3 lookInput)
+    private void CalculateRotation(Vector3 lookInput)
     {
         // 水平旋转（Y轴）
-        var finalTargetYaw = currentYaw;
         if (Mathf.Abs(lookInput.x) > 0.01f)
         {
-            var targetYaw = currentYaw + lookInput.x * _cameraController3CParams.mouseSensitivity;
-            targetYaw = Mathf.SmoothDampAngle(
-                currentYaw,
-                targetYaw,
-                ref _horizontalRotationVelocity,
-                _cameraController3CParams.rotationSmoothTime
-            );
-            finalTargetYaw = targetYaw;
+            targetYaw = currentYaw + lookInput.x * _cameraController3CParams.mouseSensitivity;
         }
 
         // 垂直旋转（X轴）
-        var finalTargetPitch = currentPitch;
         if (Mathf.Abs(lookInput.y) > 0.01f)
         {
-            var targetPitch = currentPitch - lookInput.y * _cameraController3CParams.mouseSensitivity;
-            targetPitch = Mathf.SmoothDampAngle(
-                currentPitch,
-                targetPitch,
-                ref _verticalRotationVelocity,
-                _cameraController3CParams.rotationSmoothTime
-            );
-
-            finalTargetPitch = Mathf.Clamp(targetPitch, _cameraController3CParams.minVerticalAngle, _cameraController3CParams.maxVerticalAngle);
+            targetPitch = currentPitch - lookInput.y * _cameraController3CParams.mouseSensitivity;
         }
+    }
+
+    private void HandleRot(float dt){
+        var finalTargetYaw = Mathf.SmoothDampAngle(
+            currentYaw,
+            targetYaw,
+            ref _horizontalRotationVelocity,
+            _cameraController3CParams.rotationSmoothTime,
+            float.PositiveInfinity,
+            dt
+        );
+
+        var finalTargetPitch = Mathf.SmoothDampAngle(
+            currentPitch,
+            targetPitch,
+            ref _verticalRotationVelocity,
+            _cameraController3CParams.rotationSmoothTime,
+            float.PositiveInfinity,
+            dt
+        );
+        finalTargetPitch = Mathf.Clamp(finalTargetPitch, _cameraController3CParams.minVerticalAngle, _cameraController3CParams.maxVerticalAngle);
 
         // 应用旋转到摄像机
         currentYaw = finalTargetYaw;
@@ -161,19 +161,21 @@ public class CameraController3C : MonoBehaviour
         transform.rotation = Quaternion.Euler(currentPitch, currentYaw, 0);
     }
 
-    private void HandleFollow(float dt, float zoomInput)
+    private void CalculateZoom(float zoomInput)
+    {
+        if(Mathf.Abs(zoomInput) > 0.01f)
+        {
+            targetZoom -= zoomInput * _cameraController3CParams.zoomSensitivity;
+            targetZoom = Mathf.Clamp(targetZoom, _cameraController3CParams.minZoom, _cameraController3CParams.maxZoom);
+        }
+    }
+
+    private void HandleFollowAndZoom(float dt)
     {
         if (target == null) return;
         if (_cameraController3CParams == null) return;
 
-
-        if(Mathf.Abs(zoomInput) > 0.01f)
-        {
-            currentTargetZoom -= zoomInput * _cameraController3CParams.zoomSensitivity;
-            currentTargetZoom = Mathf.Clamp(currentTargetZoom, _cameraController3CParams.minZoom, _cameraController3CParams.maxZoom);
-        }
-
-        currentZoom = Mathf.Lerp(currentZoom, currentTargetZoom, dt * _cameraController3CParams.zoomSmoothFactor);
+        currentZoom = Mathf.Lerp(currentZoom, targetZoom, dt * _cameraController3CParams.zoomSmoothFactor);
 
         // 计算目标位置
         Vector3 targetPosition = target.position - transform.forward * currentZoom;
@@ -211,13 +213,21 @@ public class CameraController3C : MonoBehaviour
     }
 
     private void ApplyData(DataOf3C_Camera data){
+        // c-mark:这里需要核查一下
+
         // 更新旋转相关的内部状态
+        targetYaw = data.rotation.eulerAngles.y;
+        targetPitch = data.rotation.eulerAngles.x;
         currentYaw = data.rotation.eulerAngles.y;
         currentPitch = data.rotation.eulerAngles.x;
 
         // 更新缩放相关的内部状态
+        targetZoom = data.zoom;
         currentZoom = data.zoom;
-        currentTargetZoom = data.zoom;
+
+        // 清空插值过程状态
+        _horizontalRotationVelocity = 0f;
+        _verticalRotationVelocity = 0f;
 
         // 应用旋转和位置
         transform.rotation = data.rotation;
