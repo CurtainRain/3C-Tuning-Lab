@@ -12,8 +12,6 @@ public class MovementOutputer : MonoBehaviour
     [SerializeField] private CharacterController3C _characterController3C;
     [SerializeField] private CameraController3C _cameraController3C;
 
-    private Coroutine _recordLoop;
-
     private bool _isOutputting = false;
 
 
@@ -25,41 +23,33 @@ public class MovementOutputer : MonoBehaviour
             Debug.LogError("MovementRecorder: 未找到 CharacterController3C 或 CameraController3C，将无法移动！");
             return;
         }
-
-        _recordLoop = StartCoroutine(RecordLoop());
     }
 
     private void OnDisable()
     {
-        if(_recordLoop != null){
-            StopCoroutine(_recordLoop);
-            _recordLoop = null;
-        }
-
         if(_isOutputting){
             GameRuntimeContext.Instance.output3CDataByCSVService.StopOutput3CData();
             _isOutputting = false;
         }
     }
 
-    private IEnumerator RecordLoop()
+    private void FixedUpdate()
     {
-        //c-mark:帧末是协程 无法通过脚本顺序 避免打架需要统一放在context里执行
-        while (true)
-        {
-            yield return new WaitForEndOfFrame();  // 等所有 LateUpdate 结束
-            if(GameRuntimeContext.Instance.gameRunningModeSwitcher.currentRunningMode == GameRunningMode.RecordPlaybackMode){
-                if(!_isOutputting){
-                    _isOutputting = true;
-                    var presetName = _characterController3C.getPresetName() + "_" + _cameraController3C.getPresetName();
-                    GameRuntimeContext.Instance.output3CDataByCSVService.StartOutput3CData(presetName);
-                }
-                CapturePlayerAndCamera();
-            }else{
-                if(_isOutputting){
-                    _isOutputting = false;
-                    GameRuntimeContext.Instance.output3CDataByCSVService.StopOutput3CData();
-                }
+        if (_characterController3C == null || _cameraController3C == null){
+            return;
+        }
+
+        if(GameRuntimeContext.Instance.gameRunningModeSwitcher.currentRunningMode == GameRunningMode.RecordPlaybackMode){
+            if(!_isOutputting){
+                _isOutputting = true;
+                var presetName = _characterController3C.getPresetName() + "_" + _cameraController3C.getPresetName();
+                GameRuntimeContext.Instance.output3CDataByCSVService.StartOutput3CData(presetName);
+            }
+            CapturePlayerAndCamera();
+        }else{
+            if(_isOutputting){
+                _isOutputting = false;
+                GameRuntimeContext.Instance.output3CDataByCSVService.StopOutput3CData();
             }
         }
     }

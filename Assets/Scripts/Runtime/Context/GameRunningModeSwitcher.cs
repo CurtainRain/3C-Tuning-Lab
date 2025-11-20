@@ -21,8 +21,6 @@ public class GameRunningModeSwitcher
             Debug.LogError("GameRunningModeSwitcher: 未找到 SystemInputHandler，将无法接收输入！");
             return;
         }
-
-        _systemInputHandler.OnInputUpdated += OnInputReceived;
     }
 
     public void Destroy()
@@ -30,7 +28,6 @@ public class GameRunningModeSwitcher
         // 取消订阅
         if (_systemInputHandler != null)
         {
-            _systemInputHandler.OnInputUpdated -= OnInputReceived;
             _systemInputHandler = null;
         }
     }
@@ -45,8 +42,10 @@ public class GameRunningModeSwitcher
     /// <summary>
     /// 接收输入数据（由 InputHandler 调用）
     /// </summary>
-    private void OnInputReceived(SystemInputData inputData)
+    public void FixedUpdate()
     {
+        var inputData = _systemInputHandler.GetInputData();
+
         if(inputData.recordModePressed)
         {
             if(currentRunningMode == GameRunningMode.PlayMode)

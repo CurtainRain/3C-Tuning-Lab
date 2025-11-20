@@ -1,3 +1,4 @@
+using Unity.VisualScripting;
 using UnityEngine;
 
 /// <summary>
@@ -8,6 +9,10 @@ public class PlayerInputHandler
 {
     private PlayerInputData _currentInput;
     private GameRuntimeContext _gameRuntimeContext;
+
+    private bool _jumpPressed;
+    private bool _interactPressed;
+    private float _zoomInput;
 
     public void Init(GameRuntimeContext gameRuntimeContext)
     {
@@ -23,8 +28,21 @@ public class PlayerInputHandler
         _gameRuntimeContext = null;
     }
 
+    public void Update()
+    {
+        if (_gameRuntimeContext.inputProvider == null) return;
 
-    public void Tick()
+        // 瞬时状态需要每帧记录状态等待fixedUpdate更新
+        _jumpPressed |= _gameRuntimeContext.inputProvider.GetJumpInput();
+        _interactPressed |= _gameRuntimeContext.inputProvider.GetInteractInput();
+        var curFrameZoomInput = _gameRuntimeContext.inputProvider.GetZoomInput();
+        if(Mathf.Abs(curFrameZoomInput)>0){
+            _zoomInput = curFrameZoomInput;
+        }
+    }
+
+
+    public void FixedUpdate()
     {
         // 每帧更新输入数据
         if (_gameRuntimeContext.inputProvider == null) return;
@@ -34,11 +52,16 @@ public class PlayerInputHandler
         {
             moveInput = _gameRuntimeContext.inputProvider.GetMoveInput(),
             lookInput = _gameRuntimeContext.inputProvider.GetLookInput(),
-            zoomInput = _gameRuntimeContext.inputProvider.GetZoomInput(),
-            jumpPressed = _gameRuntimeContext.inputProvider.GetJumpInput(),
+            zoomInput = _zoomInput,
+            jumpPressed = _jumpPressed,
             sprintHeld = _gameRuntimeContext.inputProvider.GetSprintInput(),
-            interactPressed = _gameRuntimeContext.inputProvider.GetInteractInput(),
+            interactPressed = _interactPressed,
         };
+
+        // 消耗输入
+        _jumpPressed = false;
+        _interactPressed = false;
+        _zoomInput = 0f;
     }
 
 

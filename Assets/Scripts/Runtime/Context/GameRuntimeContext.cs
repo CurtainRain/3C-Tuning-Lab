@@ -72,11 +72,23 @@ public class GameRuntimeContext : MonoBehaviour
         SceneManager.LoadScene(firstScene.name, LoadSceneMode.Additive);
     }
 
+    void FixedUpdate()
+    {
+        systemInputHandler.FixedUpdate();
+        gameRunningModeSwitcher.FixedUpdate();
+
+        playerInputHandler.FixedUpdate();
+        recordPlaybackInputHandler.FixedUpdate();
+    }
+
     void Update()
     {
-        systemInputHandler.Tick();
-        playerInputHandler.Tick();
-        recordPlaybackInputHandler.Tick();
+        systemInputHandler.Update();
+        playerInputHandler.Update();
+    }
+
+    void LateUpdate()
+    {
     }
 
     private IEnumerator RecordLoop()
@@ -89,7 +101,6 @@ public class GameRuntimeContext : MonoBehaviour
     }
 
     void OnFrameEnd(){
-        recordPlaybackInputHandler.OnFrameEnd();
     }
 
     void OnDestroy()

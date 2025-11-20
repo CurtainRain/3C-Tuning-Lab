@@ -9,8 +9,8 @@ public class SystemInputHandler
     private IInputProvider _inputProvider;
     private SystemInputData _currentInput;
 
-    // 事件：当输入更新时触发
-    public System.Action<SystemInputData> OnInputUpdated;
+    private bool _recordModePressed;
+    private bool _recordPlaybackPressed;
 
     public void Init(IInputProvider inputProvider)
     {
@@ -25,10 +25,16 @@ public class SystemInputHandler
     public void Destroy()
     {
         _inputProvider = null;
-        OnInputUpdated = null;
     }
 
-    public void Tick()
+    public void Update()
+    {
+        // 瞬时输入需要每帧记录状态等待fixedUpdate更新
+        _recordModePressed |= _inputProvider.GetRecordModeInput();
+        _recordPlaybackPressed |= _inputProvider.GetRecordPlaybackInput();
+    }
+
+    public void FixedUpdate()
     {
         // 每帧更新输入数据
         if (_inputProvider == null) return;
@@ -36,12 +42,13 @@ public class SystemInputHandler
         // 收集所有输入
         _currentInput = new SystemInputData
         {
-            recordModePressed = _inputProvider.GetRecordModeInput(),
-            recordPlaybackPressed = _inputProvider.GetRecordPlaybackInput()
+            recordModePressed = _recordModePressed,
+            recordPlaybackPressed = _recordPlaybackPressed
         };
 
-        // 通知输入更新
-        OnInputUpdated?.Invoke(_currentInput);
+        // 消耗输入
+        _recordModePressed = false;
+        _recordPlaybackPressed = false;
     }
 
     /// <summary>

@@ -12,7 +12,6 @@ public class RecordPlaybackInputHandler
     public System.Action<PlayerInputDataCollection> OnPlaybackStart;
     private GameRuntimeContext _gameRuntimeContext;
     private bool _isPlaybacking = false;
-    private bool _isInitialized = false;
     private PlayerInputDataCollection _recordByInputDatasCollection;
     private PlayerInputData _currentInput;
 
@@ -31,18 +30,8 @@ public class RecordPlaybackInputHandler
         OnPlaybackStart = null;
     }
 
-    public void Tick(){
-        if(!_isPlaybacking || _isInitialized){
-            return;
-        }
-        _isInitialized = true;
-        OnPlaybackStart?.Invoke(_recordByInputDatasCollection);
-    }
-
-
-    public void OnFrameEnd()
-    {
-        // 每帧末 为下一帧更新输入数据
+    public void FixedUpdate(){
+        // 为本帧准备回放输入数据
         if(_gameRuntimeContext.gameRunningModeSwitcher.currentRunningMode != GameRunningMode.RecordPlaybackMode){
             _isPlaybacking = false;
             return;
@@ -51,12 +40,11 @@ public class RecordPlaybackInputHandler
         if(!_isPlaybacking){
             StartPlayback();
             _isPlaybacking = true;
-            _isInitialized = false;
         }else{
             UpdatePlayback();
         }
 
-        if(_recordByInputDatasCollection.inputDatas.Count == 0){
+        if(_recordByInputDatasCollection == null || _recordByInputDatasCollection.inputDatas.Count == 0){
             EndPlayback();
         }
     }
@@ -65,6 +53,7 @@ public class RecordPlaybackInputHandler
         var collection = _gameRuntimeContext.iOPlayerInputDataService.GetInputDataCollection();
         if(collection != null && collection.inputDatas != null){
             _recordByInputDatasCollection = collection;
+            OnPlaybackStart?.Invoke(_recordByInputDatasCollection);
         }else{
             Debug.LogError("RecordPlaybackInputHandler: 未能读取录制数据, 无法回放");
         }
