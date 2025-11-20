@@ -47,10 +47,12 @@ public class CameraController3C : MonoBehaviour
             return;
         }
 
-        var comp = target.GetComponent<CharacterController3C>();
+        var comp = target.GetComponentInParent<CharacterController3C>();
         if(comp != null)
         {
             comp.cameraTransform = transform;
+        }else{
+            Debug.LogError("CameraController3C: 未找到 CharacterController3C，target将无法运动！");
         }
 
         _inputHandler = GameRuntimeContext.Instance.playerInputHandler;
@@ -73,7 +75,6 @@ public class CameraController3C : MonoBehaviour
         transform.position = target.position - transform.forward * currentZoom;
         currentYaw = transform.eulerAngles.y;
         currentPitch = transform.eulerAngles.x;
-
 
         // 注册回放开始监听
         _recordPlaybackInputHandler.OnPlaybackStart += OnPlaybackStartReceived;
@@ -234,7 +235,7 @@ public class CameraController3C : MonoBehaviour
         transform.position = data.position;
     }
 
-    public string getPresetName(){
+    public string GetPresetName(){
         return _cameraController3CParams.name;
     }
 }

@@ -1,5 +1,6 @@
 using System;
 using Runtime.Const.Enums;
+using Unity.VisualScripting;
 using UnityEngine;
 
 /// <summary>
@@ -12,6 +13,13 @@ public class CharacterController3C : MonoBehaviour
 {
     [Header("角色设置")]
     [SerializeField] private CharacterController3CParams _characterController3CParams;
+    [SerializeField] private Transform _meshTransform;
+
+    private Vector3 _lastPosition;
+    private Vector3 _currPosition;
+
+    private Quaternion _lastRotation;
+    private Quaternion _currRotation;
 
     private CharacterController _characterController;
     private Vector3 _velocity;
@@ -19,14 +27,8 @@ public class CharacterController3C : MonoBehaviour
 
     [HideInInspector] public Transform cameraTransform;
 
-    private float _carrentYawSpeed;
-    private float _carrentYawSpeedVelocity = 0f;
-
-    // 可供消费的输入状态
-    private Vector2 moveInput;      // 移动输入（WASD/左摇杆）
-    private bool jumpPressed;       // 跳跃按下
-    private bool sprintHeld;        // 冲刺按住
-    private GameRunningMode lastFrameMode;
+    private float _currentYaw;
+    private float _currentYawSpeedVelocity = 0f;
 
 
     private PlayerInputHandler _inputHandler;
@@ -61,8 +63,18 @@ public class CharacterController3C : MonoBehaviour
             return;
         }
 
+        if(_meshTransform == null)
+        {
+            Debug.LogError("CharacterController3C: 未设置 MeshTransform，将无法移动网格！");
+            return;
+        }
+
         // 订阅回放开始事件
         _recordPlaybackInputHandler.OnPlaybackStart += OnPlaybackStartReceived;
+
+        // 初始化位置和旋转
+        _currPosition =_lastPosition = transform.position;
+        _currRotation = _lastRotation = transform.rotation;
     }
 
     private void OnDestroy()
@@ -85,75 +97,80 @@ public class CharacterController3C : MonoBehaviour
         ApplyData(initialPlayerData);
     }
 
-
-    private void Update(){
-        PlayerInputData inputData = GameRuntimeContext.Instance.GetInputData();
-
-        if(lastFrameMode != GameRuntimeContext.Instance.gameRunningModeSwitcher.currentRunningMode){
-            // 更换模式 所以连续记录的状态需要重置
-            jumpPressed = false;
-        }
-
-
-        lastFrameMode = GameRuntimeContext.Instance.gameRunningModeSwitcher.currentRunningMode;
-        moveInput = inputData.moveInput;
-        sprintHeld = inputData.sprintHeld;
-        jumpPressed |= inputData.jumpPressed;
-    }
-
-    //c-mark:现在回放是不稳定的 虽然这里用了fix 但输入仍然在update的dt不一致 导致回放的时候速度不一致
     private void FixedUpdate()
     {
         if (_characterController3CParams == null) return;
 
+        var inputData = GameRuntimeContext.Instance.GetInputData();
+
         var dt = Time.fixedDeltaTime;
 
         // 处理移动
-        HandleMovement(dt);
+        HandleMovement(dt, inputData);
 
         // 处理跳跃
-        HandleJump();
+        HandleJump(inputData);
 
         // 应用重力
         ApplyGravity();
 
+        _lastPosition = _currPosition;
+        _lastRotation = _currRotation;
+
         // 应用移动
         _characterController.Move(_velocity * dt);
+
+        // 更新新的位置和旋转
+        _currPosition = transform.position;
+        _currRotation = transform.rotation;
     }
 
-    private void HandleMovement(float dt)
+    private void Update()
+    {
+        if(_meshTransform != null)
+        {
+            var timeRatio = (Time.time - Time.fixedTime) / Time.fixedDeltaTime;
+
+            // 利用fixedUpdate的帧间隔计算插值比例
+            var alpha = Mathf.Clamp01(timeRatio * _characterController3CParams.positionSmoothFactor);
+            _meshTransform.position = Vector3.Lerp(_lastPosition, _currPosition, alpha);
+
+            alpha = Mathf.Clamp01(timeRatio * _characterController3CParams.rotationSmoothFactor);
+            _meshTransform.rotation = Quaternion.Slerp(_lastRotation, _currRotation, alpha);
+        }
+    }
+
+    private void HandleMovement(float dt, PlayerInputData inputData)
     {
         // 根据是否冲刺选择速度
-        _currentSpeed = sprintHeld ? _characterController3CParams.sprintSpeed : _characterController3CParams.walkSpeed;
+        _currentSpeed = inputData.sprintHeld ? _characterController3CParams.sprintSpeed : _characterController3CParams.walkSpeed;
 
         // 走动的时候 以摄像机面朝平面方向转换为世界空间方向
         Vector3 moveDirection = Vector3.zero;
-        float targetYaw = _carrentYawSpeed;
-        if(cameraTransform != null && (Mathf.Abs(moveInput.x) > 0.01f || Mathf.Abs(moveInput.y) > 0.01f))
+        float targetYaw = _currentYaw;
+        if(cameraTransform != null && (Mathf.Abs(inputData.moveInput.x) > 0.01f || Mathf.Abs(inputData.moveInput.y) > 0.01f))
         {
             // 调整朝向
             targetYaw = cameraTransform.eulerAngles.y;
 
             // 计算移动方向
-            moveDirection = transform.right * moveInput.x + transform.forward * moveInput.y;
+            moveDirection = transform.right * inputData.moveInput.x + transform.forward * inputData.moveInput.y;
         }
 
-        _carrentYawSpeed = Mathf.SmoothDampAngle(_carrentYawSpeed, targetYaw, ref _carrentYawSpeedVelocity, 0.1f, float.PositiveInfinity, dt);
-        transform.rotation = Quaternion.Euler(0, _carrentYawSpeed, 0);
+        _currentYaw = Mathf.SmoothDampAngle(_currentYaw, targetYaw, ref _currentYawSpeedVelocity, 0.1f, float.PositiveInfinity, dt);
+        transform.rotation = Quaternion.Euler(0, _currentYaw, 0);
 
         // 应用速度
         _velocity.x = moveDirection.x * _currentSpeed;
         _velocity.z = moveDirection.z * _currentSpeed;
     }
 
-    private void HandleJump()
+    private void HandleJump(PlayerInputData inputData)
     {
-        if (jumpPressed)
+        if (inputData.jumpPressed)
         {
             _velocity.y = Mathf.Sqrt(_characterController3CParams.jumpHeight * -2f * Physics.gravity.y * _characterController3CParams.gravityFactor);
-            jumpPressed = false;
         }
-
     }
 
     private void ApplyGravity()
@@ -174,20 +191,28 @@ public class CharacterController3C : MonoBehaviour
         _characterController.enabled = false;
 
         // 更新旋转相关的内部状态
-        _carrentYawSpeed = data.rotation.eulerAngles.y;
-        _carrentYawSpeedVelocity = 0f; // 重置插值速度，避免从旧值插值
+        _currentYaw = data.rotation.eulerAngles.y;
+        _currentYawSpeedVelocity = 0f; // 重置插值速度，避免从旧值插值
+
+        // 更新位置
+        _lastPosition = _currPosition = data.position;
+        _lastRotation = _currRotation = data.rotation;
 
         // 更新速度状态
         _velocity = data.velocity;
 
-        // 应用位置和旋转
+        // 应用逻辑位置和旋转
         transform.position = data.position;
         transform.rotation = data.rotation;
+
+        // 更新渲染位置和旋转
+        _meshTransform.position = _lastPosition;
+        _meshTransform.rotation = _lastRotation;
 
         _characterController.enabled = wasEnabled;
     }
 
-    public string getPresetName(){
+    public string GetPresetName(){
         return _characterController3CParams.name;
     }
 }

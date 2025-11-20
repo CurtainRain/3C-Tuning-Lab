@@ -42,7 +42,7 @@ public class MovementOutputer : MonoBehaviour
         if(GameRuntimeContext.Instance.gameRunningModeSwitcher.currentRunningMode == GameRunningMode.RecordPlaybackMode){
             if(!_isOutputting){
                 _isOutputting = true;
-                var presetName = _characterController3C.getPresetName() + "_" + _cameraController3C.getPresetName();
+                var presetName = _characterController3C.GetPresetName() + "_" + _cameraController3C.GetPresetName();
                 GameRuntimeContext.Instance.output3CDataByCSVService.StartOutput3CData(presetName);
             }
             CapturePlayerAndCamera();
