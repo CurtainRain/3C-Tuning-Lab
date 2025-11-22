@@ -20,3 +20,4 @@ MonoBehaviour:
   zoomSensitivity: 50
   minZoom: 1
   maxZoom: 30
+  cameraRadius: 0.3

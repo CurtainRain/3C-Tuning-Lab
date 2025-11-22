@@ -15,4 +15,5 @@ public class CameraController3CParams : ScriptableObject
     [Tooltip("缩放灵敏度")] public float zoomSensitivity = 50f;
     [Tooltip("最小缩放距离")] public float minZoom = 1f;
     [Tooltip("最大缩放距离")] public float maxZoom = 30f;
+    [Tooltip("摄像机半径")] public float cameraRadius = 0.3f;
 }

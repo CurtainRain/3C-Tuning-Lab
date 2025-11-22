@@ -20,7 +20,7 @@ public class DataOf3C_Camera{
     // c-mark:现在承担了csv输出和回放原始数据两项功能 考虑分开
     public Vector3 position;
     public Quaternion rotation;
-    public float zoom;
+    public float zoom;//c-mark:zoom现在记录逻辑值 需要区分下逻辑和渲染值
 }
 
 [System.Serializable]

@@ -12,6 +12,7 @@ class CameraController3CParamGUIEditor:Editor
     SerializedProperty zoomSensitivity = null;
     SerializedProperty minZoom = null;
     SerializedProperty maxZoom = null;
+    SerializedProperty cameraRadius = null;
 
     private void OnEnable()
     {
@@ -23,6 +24,7 @@ class CameraController3CParamGUIEditor:Editor
         zoomSensitivity = serializedObject.FindProperty("zoomSensitivity");
         minZoom = serializedObject.FindProperty("minZoom");
         maxZoom = serializedObject.FindProperty("maxZoom");
+        cameraRadius = serializedObject.FindProperty("cameraRadius");
     }
 
     private void OnDisable()
@@ -35,6 +37,7 @@ class CameraController3CParamGUIEditor:Editor
         zoomSensitivity = null;
         minZoom = null;
         maxZoom = null;
+        cameraRadius = null;
     }
 
     public override void OnInspectorGUI()
@@ -49,6 +52,7 @@ class CameraController3CParamGUIEditor:Editor
         EditorGUILayout.PropertyField(zoomSensitivity, new GUIContent("缩放灵敏度"));
         EditorGUILayout.PropertyField(minZoom, new GUIContent("最小缩放距离"));
         EditorGUILayout.PropertyField(maxZoom, new GUIContent("最大缩放距离"));
+        EditorGUILayout.PropertyField(cameraRadius, new GUIContent("摄像机半径"));
 
         serializedObject.ApplyModifiedProperties();
     }

@@ -1,5 +1,4 @@
-using Runtime.Const.Enums;
-using Unity.VisualScripting;
+using GameRuntime.CustomUtils;
 using UnityEngine;
 
 /// <summary>
@@ -9,7 +8,6 @@ using UnityEngine;
 /// </summary>
 public class CameraController3C : MonoBehaviour
 {
-    // c-mark:加一下射线追踪 避免在碰撞体内/地形下穿过去 此时需要在碰撞点前
     [Header("跟随目标")]
     [SerializeField] private Transform target; // 跟随的角色
 
@@ -23,7 +21,7 @@ public class CameraController3C : MonoBehaviour
     private float targetPitch = 0f;
     private float targetZoom = 20f;
 
-    private float currentYaw = 0f;
+    private float currentYaw = 0f;//c-mark:这个初始值也应该给到param
     private float currentPitch = 0f;
     private float currentZoom = 20f;
 
@@ -70,11 +68,11 @@ public class CameraController3C : MonoBehaviour
         }
 
         // 初始化摄像机旋转和位置
-        currentZoom = 20f;
         transform.rotation = target.rotation;
-        transform.position = target.position - transform.forward * currentZoom;
+        transform.position = target.position - transform.forward * targetZoom;
         currentYaw = transform.eulerAngles.y;
         currentPitch = transform.eulerAngles.x;
+        currentZoom = targetZoom = 20f;
 
         // 注册回放开始监听
         _recordPlaybackInputHandler.OnPlaybackStart += OnPlaybackStartReceived;
@@ -176,12 +174,78 @@ public class CameraController3C : MonoBehaviour
         if (target == null) return;
         if (_cameraController3CParams == null) return;
 
-        currentZoom = Mathf.Lerp(currentZoom, targetZoom, dt * _cameraController3CParams.zoomSmoothFactor);
+        // 计算zoom
+        var cameraPosition = target.position - transform.forward * targetZoom;
 
-        // 计算目标位置
-        Vector3 targetPosition = target.position - transform.forward * currentZoom;
-        transform.position = targetPosition;
+        var ratioOfGround = GetRatioByCollisonWithNormal(target.position, cameraPosition, _cameraController3CParams.cameraRadius);
+        var ratioOfThin = GetRatioByCollisonWithThin(target.position, cameraPosition, _cameraController3CParams.cameraRadius);
+        var finalRatio = Mathf.Min(ratioOfGround, ratioOfThin);
+        var finalZoom = targetZoom * finalRatio;
+        const float maxRatio = 1f;
+
+
+        if(finalRatio < maxRatio && finalZoom < currentZoom){
+            // 发生了碰撞 且摄像机当前位置已经处于遮挡中 直接赋值避免穿模
+            currentZoom = finalZoom;
+        }else{
+            // 没有发生碰撞 或者发生了碰撞但摄像机当前位置仍在外部 可以插值
+            currentZoom = Mathf.Lerp(currentZoom, finalZoom, dt * _cameraController3CParams.zoomSmoothFactor);
+        }
+
+        Vector3 position = target.position - transform.forward * currentZoom;
+        transform.position = position;
     }
+
+    private float GetRatioByCollisonWithNormal(Vector3 targetPos, Vector3 cameraPos, float cameraRadius){
+        var camToTarDis = Vector3.Distance(cameraPos, targetPos);
+        var ratio = 1f;
+
+        // 几乎重合时直接返回
+        if (camToTarDis <= Mathf.Epsilon)
+        {
+            return ratio;
+        }
+
+        int thinLayer = LayerMask.NameToLayer("Thin");// 纤细物体需要排除
+        int thinMask  = thinLayer >= 0 ? (1 << thinLayer) : 0;
+
+        // 检测起点到终点的射线是否与触发器有碰撞
+        var layerMask = ~0 & ~(1 << target.gameObject.layer) & ~thinMask; // 排除对象所在层和Thin层
+        if(Physics.SphereCast(targetPos, cameraRadius, (cameraPos - targetPos).normalized, out var hit, camToTarDis, layerMask))
+        {
+            ratio = hit.distance / camToTarDis;
+        }
+
+        return ratio;
+    }
+
+    private float GetRatioByCollisonWithThin(Vector3 targetPos, Vector3 cameraPos, float cameraRadius){
+        var camToTarDis = Vector3.Distance(cameraPos, targetPos);
+        var ratio = 1f;
+
+        // 几乎重合时直接返回
+        if (camToTarDis <= Mathf.Epsilon)
+        {
+            return ratio;
+        }
+
+        int thinLayer = LayerMask.NameToLayer("Thin");
+        int thinMask  = thinLayer >= 0 ? (1 << thinLayer) : 0;
+
+        // 检测起点到终点的射线是否与普通碰撞体有碰撞
+        var layerMask = thinMask; // 排除对象所在层和地面层
+        var isCollision = MathUtil.TryGetEntryPoint(targetPos, cameraPos, layerMask, out var entryPoint, cameraRadius);
+        if(isCollision)
+        {
+            var dis = Vector3.Distance(entryPoint, targetPos);
+            dis -= cameraRadius;
+            ratio = dis / camToTarDis;
+        }
+
+        return ratio;
+    }
+
+
 
     /// <summary>
     /// 设置跟随目标
@@ -196,26 +260,23 @@ public class CameraController3C : MonoBehaviour
             comp.cameraTransform = transform;
         }
 
-
         // 设置摄像机旋转和位置
-        currentZoom = 20f;
         transform.rotation = target.rotation;
-        transform.position = target.position - transform.forward * currentZoom;
+        transform.position = target.position - transform.forward * targetZoom;
         currentYaw = transform.eulerAngles.y;
         currentPitch = transform.eulerAngles.x;
+        currentZoom = targetZoom = 20f;
     }
 
     public DataOf3C_Camera GetData(){
         return new DataOf3C_Camera{
             position = transform.position,
             rotation = transform.rotation,
-            zoom = currentZoom
+            zoom = targetZoom
         };
     }
 
     private void ApplyData(DataOf3C_Camera data){
-        // c-mark:这里需要核查一下
-
         // 更新旋转相关的内部状态
         targetYaw = data.rotation.eulerAngles.y;
         targetPitch = data.rotation.eulerAngles.x;
@@ -223,8 +284,7 @@ public class CameraController3C : MonoBehaviour
         currentPitch = data.rotation.eulerAngles.x;
 
         // 更新缩放相关的内部状态
-        targetZoom = data.zoom;
-        currentZoom = data.zoom;
+        currentZoom = targetZoom = data.zoom;
 
         // 清空插值过程状态
         _horizontalRotationVelocity = 0f;

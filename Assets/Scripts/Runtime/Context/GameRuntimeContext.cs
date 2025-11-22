@@ -10,8 +10,6 @@ using UnityEngine.SceneManagement;
 /// </summary>
 public class GameRuntimeContext : MonoBehaviour
 {
-
-    // c-mark:服务和handler太多了 考虑直接全部编程接口 这样只有new的地方要考虑初始化 其他地方直接使用接口
     public static GameRuntimeContext Instance;
 
     // 基础服务
@@ -95,7 +93,7 @@ public class GameRuntimeContext : MonoBehaviour
     {
         while (true)
         {
-            yield return new WaitForEndOfFrame();  // 等所有 LateUpdate 结束
+            yield return new WaitForEndOfFrame();
             OnFrameEnd();
         }
     }
