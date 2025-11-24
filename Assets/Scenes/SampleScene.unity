@@ -295,7 +295,7 @@ Light:
     serializedVersion: 2
     m_Bits: 4294967295
   m_RenderingLayerMask: 1
-  m_Lightmapping: 1
+  m_Lightmapping: 4
   m_LightShadowCasterMode: 0
   m_AreaSize: {x: 1, y: 1}
   m_BounceIntensity: 1
@@ -560,7 +560,6 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   target: {fileID: 1706961529}
-  _cameraController3CParams: {fileID: 11400000, guid: 19eb4b521d1283c4e99ab96b6c76a526, type: 2}
 --- !u!1 &1195246482
 GameObject:
   m_ObjectHideFlags: 0
@@ -591,9 +590,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 29cef5db1187cd545b8a5d114ede71d0, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  _characterController3CParams: {fileID: 11400000, guid: 4ec8765fab3dd2847b69045ba51ebb0e, type: 2}
   _meshTransform: {fileID: 1706961529}
-  cameraTransform: {fileID: 0}
+  cameraController3C: {fileID: 0}
 --- !u!143 &1195246484
 CharacterController:
   m_ObjectHideFlags: 0

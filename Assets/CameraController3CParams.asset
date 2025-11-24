@@ -18,8 +18,8 @@ MonoBehaviour:
   minVerticalAngle: -90
   maxVerticalAngle: 90
   zoomSensitivity: 50
-  minZoom: 1
-  maxZoom: 30
+  minZoom: 3
+  maxZoom: 12
   cameraRadius: 0.3
   initialYaw: 0
   initialPitch: 20

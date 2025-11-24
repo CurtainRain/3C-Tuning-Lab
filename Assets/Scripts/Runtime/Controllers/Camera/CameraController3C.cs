@@ -11,8 +11,7 @@ public class CameraController3C : MonoBehaviour
     [Header("跟随目标")]
     [SerializeField] private Transform target; // 跟随的角色
 
-    [Header("摄像机设置")]
-    [SerializeField] private CameraController3CParams _cameraController3CParams;
+    private CameraController3CParams _cameraController3CParams;
 
     private float _verticalRotationVelocity;
     private float _horizontalRotationVelocity;
@@ -55,13 +54,6 @@ public class CameraController3C : MonoBehaviour
             return;
         }
 
-        if(_cameraController3CParams == null)
-        {
-            Debug.LogError("CameraController3C: 未设置 CameraController3CParams，将无法进行跟随！");
-            enabled = false; // 禁用组件
-            return;
-        }
-
         var comp = target.GetComponentInParent<CharacterController3C>();
         if(comp != null)
         {
@@ -84,6 +76,14 @@ public class CameraController3C : MonoBehaviour
         if (_recordPlaybackInputHandler == null)
         {
             Debug.LogError("CameraController3C: 未找到 RecordPlaybackInputHandler，将无法接收输入！");
+            enabled = false; // 禁用组件
+            return;
+        }
+
+        _cameraController3CParams = GameRuntimeContext.Instance.cameraController3CParams;
+        if(_cameraController3CParams == null)
+        {
+            Debug.LogError("CameraController3C: 未设置 CameraController3CParams，将无法进行跟随！");
             enabled = false; // 禁用组件
             return;
         }

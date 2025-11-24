@@ -151,7 +151,9 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 163bd5164d1cac243b9f814d38a4b9a2, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  firstScene: {fileID: 102900000, guid: 9fc0d4010bbf28b4594072e72b8655ab, type: 3}
+  _firstSceneName: SampleScene
+  cameraController3CParams: {fileID: 11400000, guid: 19eb4b521d1283c4e99ab96b6c76a526, type: 2}
+  characterController3CParams: {fileID: 11400000, guid: 4ec8765fab3dd2847b69045ba51ebb0e, type: 2}
 --- !u!4 &169477952
 Transform:
   m_ObjectHideFlags: 0

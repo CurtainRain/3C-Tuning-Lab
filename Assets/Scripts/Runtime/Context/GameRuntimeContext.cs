@@ -30,6 +30,10 @@ public class GameRuntimeContext : MonoBehaviour
     [Header("首地图")]
     [SerializeField] private SceneAsset firstScene;
 
+    [Header("3C参数")]
+    [Tooltip("摄像机参数")] public CameraController3CParams cameraController3CParams;
+    [Tooltip("角色参数")] public CharacterController3CParams characterController3CParams;
+
     private Coroutine _recordLoop;
 
     void Awake()

@@ -8,9 +8,9 @@ using UnityEngine;
 [RequireComponent(typeof(CharacterController))]
 public class CharacterController3C : MonoBehaviour
 {
-    [Header("角色设置")]
-    [SerializeField] private CharacterController3CParams _characterController3CParams;
     [SerializeField] private Transform _meshTransform;
+
+    private CharacterController3CParams _characterController3CParams;
 
     private Vector3 _lastPosition;
     private Vector3 _currPosition;
@@ -56,16 +56,17 @@ public class CharacterController3C : MonoBehaviour
             return;
         }
 
-        if(_characterController3CParams == null)
+        if(_meshTransform == null)
         {
-            Debug.LogError("CharacterController3C: 未设置 CharacterController3CParams，将无法进行控制！");
+            Debug.LogError("CharacterController3C: 未设置 MeshTransform，将无法移动网格！");
             enabled = false; // 禁用组件
             return;
         }
 
-        if(_meshTransform == null)
+        _characterController3CParams = GameRuntimeContext.Instance.characterController3CParams;
+        if(_characterController3CParams == null)
         {
-            Debug.LogError("CharacterController3C: 未设置 MeshTransform，将无法移动网格！");
+            Debug.LogError("CharacterController3C: 未设置 CharacterController3CParams，将无法进行控制！");
             enabled = false; // 禁用组件
             return;
         }
