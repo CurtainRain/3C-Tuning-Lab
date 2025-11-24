@@ -25,7 +25,7 @@ public class CharacterController3C : MonoBehaviour
     private Vector3 _velocity;
     private float _currentSpeed;
 
-    [HideInInspector] public Transform cameraTransform;
+    [HideInInspector] public CameraController3C cameraController3C;
 
     private float _currentYaw;
     private float _currentYawSpeedVelocity = 0f;
@@ -148,10 +148,10 @@ public class CharacterController3C : MonoBehaviour
         // 走动的时候 以摄像机面朝平面方向转换为世界空间方向
         Vector3 moveDirection = Vector3.zero;
         float targetYaw = _currentYaw;
-        if(cameraTransform != null && (Mathf.Abs(inputData.moveInput.x) > 0.01f || Mathf.Abs(inputData.moveInput.y) > 0.01f))
+        if(cameraController3C != null && (Mathf.Abs(inputData.moveInput.x) > 0.01f || Mathf.Abs(inputData.moveInput.y) > 0.01f))
         {
             // 调整朝向
-            targetYaw = cameraTransform.eulerAngles.y;
+            targetYaw = cameraController3C.GetLogicYaw();
 
             // 计算移动方向
             moveDirection = transform.right * inputData.moveInput.x + transform.forward * inputData.moveInput.y;

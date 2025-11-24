@@ -29,6 +29,19 @@ public class CameraController3C : MonoBehaviour
     private PlayerInputHandler _inputHandler;
     private RecordPlaybackInputHandler _recordPlaybackInputHandler;
 
+    public float GetLogicYaw()
+    {
+        return currentYaw;
+    }
+    public float GetLogicPitch()
+    {
+        return currentPitch;
+    }
+    public float GetLogicZoom()
+    {
+        return currentZoom;
+    }
+
     private void Start()
     {
         // 如果没有指定目标，报错并返回
@@ -48,7 +61,7 @@ public class CameraController3C : MonoBehaviour
         var comp = target.GetComponentInParent<CharacterController3C>();
         if(comp != null)
         {
-            comp.cameraTransform = transform;
+            comp.cameraController3C = this;
         }else{
             Debug.LogError("CameraController3C: 未找到 CharacterController3C，target将无法运动！");
         }
@@ -257,7 +270,7 @@ public class CameraController3C : MonoBehaviour
 
         if(comp != null)
         {
-            comp.cameraTransform = transform;
+            comp.cameraController3C = this;
         }
 
         // 设置摄像机旋转和位置
