@@ -1,7 +1,6 @@
 using System;
 using System.Collections;
 using Runtime.Const.Enums;
-using UnityEditor;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 
@@ -28,23 +27,27 @@ public class GameRuntimeContext : MonoBehaviour
     public RecordPlaybackInputHandler recordPlaybackInputHandler;
 
     [Header("首地图")]
-    [SerializeField] private SceneAsset firstScene;
+    [SerializeField] private string _firstSceneName;
 
     [Header("3C参数")]
     [Tooltip("摄像机参数")] public CameraController3CParams cameraController3CParams;
     [Tooltip("角色参数")] public CharacterController3CParams characterController3CParams;
 
     private Coroutine _recordLoop;
+    private string _bootstrapSceneName;  // 记录引导场景名称
 
     void Awake()
     {
+        // 在 DontDestroyOnLoad 之前记录当前场景名称
+        _bootstrapSceneName = gameObject.scene.name;
+
         DontDestroyOnLoad(gameObject);
 
         if(Instance){
             throw new Exception("GameRuntimeContext 只能有一个实例");
         }
 
-        if(!firstScene){
+        if(string.IsNullOrEmpty(_firstSceneName)){
             throw new Exception("GameRuntimeContext 未设置首地图");
         }
 
@@ -71,7 +74,37 @@ public class GameRuntimeContext : MonoBehaviour
         _recordLoop = StartCoroutine(RecordLoop());
 
         Debug.Log("GameRuntimeContext: 初始化完成, 切换到首地图");
-        SceneManager.LoadScene(firstScene.name, LoadSceneMode.Additive);
+        StartCoroutine(LoadGameSceneAsync());
+    }
+
+    /// <summary>
+    /// 异步加载游戏场景并卸载引导场景
+    /// </summary>
+    private IEnumerator LoadGameSceneAsync()
+    {
+        // 使用 Additive 模式加载游戏场景
+        yield return SceneManager.LoadSceneAsync(_firstSceneName, LoadSceneMode.Additive);
+
+        // 设置新场景为激活场景
+        Scene newScene = SceneManager.GetSceneByName(_firstSceneName);
+        if (newScene.IsValid())
+        {
+            SceneManager.SetActiveScene(newScene);
+            Debug.Log($"GameRuntimeContext: 已激活场景 {_firstSceneName}");
+        }
+
+        // 等待一帧，让Unity完成场景激活
+        yield return null;
+
+        // 切换了场景 需要更新全局光照
+        DynamicGI.UpdateEnvironment();
+
+        // 卸载引导场景
+        if (!string.IsNullOrEmpty(_bootstrapSceneName) && _bootstrapSceneName != "DontDestroyOnLoad")
+        {
+            yield return SceneManager.UnloadSceneAsync(_bootstrapSceneName);
+            Debug.Log($"GameRuntimeContext: 已卸载引导场景 {_bootstrapSceneName}");
+        }
     }
 
     void FixedUpdate()
