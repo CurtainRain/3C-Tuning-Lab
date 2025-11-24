@@ -14,6 +14,9 @@ public class CameraController3CParams : ScriptableObject
     [Tooltip("垂直视角最大角度，单位：度")] public float maxVerticalAngle = 90f;
     [Tooltip("缩放灵敏度")] public float zoomSensitivity = 50f;
     [Tooltip("最小缩放距离")] public float minZoom = 1f;
-    [Tooltip("最大缩放距离")] public float maxZoom = 30f;
+    [Tooltip("最大缩放距离")] public float maxZoom = 20f;
     [Tooltip("摄像机半径")] public float cameraRadius = 0.3f;
+    [Tooltip("初始水平视角")] public float initialYaw = 0f;
+    [Tooltip("初始垂直视角")] public float initialPitch = 0f;
+    [Tooltip("初始缩放距离")] public float initialZoom = 10f;
 }

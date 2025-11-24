@@ -13,6 +13,9 @@ class CameraController3CParamGUIEditor:Editor
     SerializedProperty minZoom = null;
     SerializedProperty maxZoom = null;
     SerializedProperty cameraRadius = null;
+    SerializedProperty initialYaw = null;
+    SerializedProperty initialPitch = null;
+    SerializedProperty initialZoom = null;
 
     private void OnEnable()
     {
@@ -25,6 +28,9 @@ class CameraController3CParamGUIEditor:Editor
         minZoom = serializedObject.FindProperty("minZoom");
         maxZoom = serializedObject.FindProperty("maxZoom");
         cameraRadius = serializedObject.FindProperty("cameraRadius");
+        initialYaw = serializedObject.FindProperty("initialYaw");
+        initialPitch = serializedObject.FindProperty("initialPitch");
+        initialZoom = serializedObject.FindProperty("initialZoom");
     }
 
     private void OnDisable()
@@ -38,6 +44,9 @@ class CameraController3CParamGUIEditor:Editor
         minZoom = null;
         maxZoom = null;
         cameraRadius = null;
+        initialYaw = null;
+        initialPitch = null;
+        initialZoom = null;
     }
 
     public override void OnInspectorGUI()
@@ -53,6 +62,9 @@ class CameraController3CParamGUIEditor:Editor
         EditorGUILayout.PropertyField(minZoom, new GUIContent("最小缩放距离"));
         EditorGUILayout.PropertyField(maxZoom, new GUIContent("最大缩放距离"));
         EditorGUILayout.PropertyField(cameraRadius, new GUIContent("摄像机半径"));
+        EditorGUILayout.PropertyField(initialYaw, new GUIContent("初始水平视角"));
+        EditorGUILayout.PropertyField(initialPitch, new GUIContent("初始垂直视角"));
+        EditorGUILayout.PropertyField(initialZoom, new GUIContent("初始缩放距离"));
 
         serializedObject.ApplyModifiedProperties();
     }

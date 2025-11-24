@@ -17,9 +17,9 @@ public class CameraController3C : MonoBehaviour
     private float _verticalRotationVelocity;
     private float _horizontalRotationVelocity;
 
-    private float _targetYaw = 0f;
-    private float _targetPitch = 0f;
-    private float _targetZoom = 20f;
+    private float _targetYaw;
+    private float _targetPitch;
+    private float _targetZoom;
 
     private float _currentYaw;
     private float _currentPitch;
@@ -92,11 +92,11 @@ public class CameraController3C : MonoBehaviour
         _thinLayerMask  = thinLayer >= 0 ? (1 << thinLayer) : 0;
 
         // 初始化摄像机旋转和位置
-        transform.rotation = target.rotation;
-        transform.position = target.position - transform.forward * _targetZoom;
-        _currentYaw = transform.eulerAngles.y;
-        _currentPitch = transform.eulerAngles.x;
-        _currentZoom = _targetZoom = 20f;
+        transform.rotation = Quaternion.Euler(_cameraController3CParams.initialPitch, _cameraController3CParams.initialYaw, 0);
+        transform.position = target.position - transform.forward * _cameraController3CParams.initialZoom;
+        _currentYaw = _targetYaw = _cameraController3CParams.initialYaw;
+        _currentPitch = _targetPitch = _cameraController3CParams.initialPitch;
+        _currentZoom = _targetZoom = _cameraController3CParams.initialZoom;
 
         // 注册回放开始监听
         _recordPlaybackInputHandler.OnPlaybackStart += OnPlaybackStartReceived;

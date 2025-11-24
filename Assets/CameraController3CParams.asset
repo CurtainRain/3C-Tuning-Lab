@@ -21,3 +21,6 @@ MonoBehaviour:
   minZoom: 1
   maxZoom: 30
   cameraRadius: 0.3
+  initialYaw: 0
+  initialPitch: 20
+  initialZoom: 10

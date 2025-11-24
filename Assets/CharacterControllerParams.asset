@@ -15,4 +15,6 @@ MonoBehaviour:
   walkSpeed: 5
   sprintSpeed: 8
   jumpHeight: 0.5
-  gravity: 1
+  gravityFactor: 1
+  positionSmoothFactor: 1
+  rotationSmoothFactor: 1
