@@ -10,8 +10,8 @@ using System.Collections.Generic;
 public class PlayerInputDataCollection{
     public List<PlayerInputData> inputDatas = new List<PlayerInputData>(0);
 
-    public DataOf3C_Camera initialCameraData;
-    public DataOf3C_Player initialPlayerData;
+    public SnapShot_Camera initialCameraData;
+    public SnapShot_Player initialPlayerData;
 }
 
 /// <summary>
@@ -24,8 +24,8 @@ public class IOPlayerInputDataRecordService
 
     private GameRuntimeContext _gameRuntimeContext;
     private List<PlayerInputData> _recordByInputDatas;
-    private DataOf3C_Camera _initialCameraData;
-    private DataOf3C_Player _initialPlayerData;
+    private SnapShot_Camera _initialCameraData;
+    private SnapShot_Player _initialPlayerData;
 
 
     public void Init(GameRuntimeContext runtimeContext){
@@ -40,7 +40,7 @@ public class IOPlayerInputDataRecordService
     // 开始输出 3C 数据
     // 参数：PresetName - 预设名称(不能为空)
     //</summary>
-    public void StartRecord(DataOf3C_Camera cameraData, DataOf3C_Player playerData){
+    public void StartRecord(SnapShot_Camera cameraData, SnapShot_Player playerData){
         if(_recordByInputDatas != null){
             Debug.LogError("Output3CDataByCSVService: 已经开始输出 3C 数据，不能重复开始！");
             return;

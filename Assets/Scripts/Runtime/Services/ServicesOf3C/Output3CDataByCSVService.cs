@@ -11,7 +11,7 @@ using System.Text;
 /// </summary>
 public class Output3CDataByCSVService
 {
-    private DatasOf3C _datasOf3C;
+    private SnapShotCollection _datasOf3C;
     private GameRuntimeContext _gameRuntimeContext;
     private string _presetName;
 
@@ -42,14 +42,14 @@ public class Output3CDataByCSVService
         }
 
         _presetName = PresetName;
-        _datasOf3C = new DatasOf3C();
+        _datasOf3C = new SnapShotCollection();
     }
 
     //<summary>
     // 添加数据到输出 3C 数据
     // 参数：dataOf3C - 数据(不能为空)
     //</summary>
-    public void AddDataToOutput3CData(DataOf3C dataOf3C){
+    public void AddDataToOutput3CData(SnapShot dataOf3C){
         if (dataOf3C == null){
             throw new ArgumentException("数据不能为空！", nameof(dataOf3C));
         }
@@ -80,7 +80,7 @@ public class Output3CDataByCSVService
 
     private static readonly CultureInfo _csvCulture = CultureInfo.InvariantCulture;
     private static readonly string _formatString = "F6";
-    private static readonly (string header, Func<DataOf3C, string> getter)[] _csvColumns = new (string, Func<DataOf3C, string>)[]{
+    private static readonly (string header, Func<SnapShot, string> getter)[] _csvColumns = new (string, Func<SnapShot, string>)[]{
         ("Frame", d => d.frame.ToString()),
         ("Time", d => d.time.ToString(_formatString, _csvCulture)),
 
@@ -118,7 +118,7 @@ public class Output3CDataByCSVService
         ("Input_ZoomInput", d => d.input.zoomInput.ToString(_formatString, _csvCulture)),
     };
 
-    private string BuildCSV(DatasOf3C datas){
+    private string BuildCSV(SnapShotCollection datas){
         if(datas == null || datas.dataOf3CList == null){
             throw new ArgumentException("数据不能为空！", nameof(datas));
         }

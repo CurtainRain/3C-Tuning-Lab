@@ -17,13 +17,15 @@ public class CameraController3C : MonoBehaviour
     private float _verticalRotationVelocity;
     private float _horizontalRotationVelocity;
 
-    private float targetYaw = 0f;
-    private float targetPitch = 0f;
-    private float targetZoom = 20f;
+    private float _targetYaw = 0f;
+    private float _targetPitch = 0f;
+    private float _targetZoom = 20f;
 
-    private float currentYaw = 0f;//c-mark:这个初始值也应该给到param
-    private float currentPitch = 0f;
-    private float currentZoom = 20f;
+    private float _currentYaw;
+    private float _currentPitch;
+    private float _currentZoom;
+
+    private LayerMask _thinLayerMask;
 
 
     private PlayerInputHandler _inputHandler;
@@ -31,15 +33,15 @@ public class CameraController3C : MonoBehaviour
 
     public float GetLogicYaw()
     {
-        return currentYaw;
+        return _currentYaw;
     }
     public float GetLogicPitch()
     {
-        return currentPitch;
+        return _currentPitch;
     }
     public float GetLogicZoom()
     {
-        return currentZoom;
+        return _currentZoom;
     }
 
     private void Start()
@@ -48,13 +50,15 @@ public class CameraController3C : MonoBehaviour
         Debug.Log(gameObject.name + " CameraController3C: 开始初始化");
         if (target == null)
         {
-           Debug.LogError("CameraController3C: 未指定跟随目标，将无法进行跟随！");
-           return;
+            Debug.LogError("CameraController3C: 未指定跟随目标，将无法进行跟随！");
+            enabled = false; // 禁用组件
+            return;
         }
 
         if(_cameraController3CParams == null)
         {
             Debug.LogError("CameraController3C: 未设置 CameraController3CParams，将无法进行跟随！");
+            enabled = false; // 禁用组件
             return;
         }
 
@@ -64,12 +68,15 @@ public class CameraController3C : MonoBehaviour
             comp.cameraController3C = this;
         }else{
             Debug.LogError("CameraController3C: 未找到 CharacterController3C，target将无法运动！");
+            enabled = false; // 禁用组件
+            return;
         }
 
         _inputHandler = GameRuntimeContext.Instance.playerInputHandler;
         if (_inputHandler == null)
         {
             Debug.LogError("CameraController3C: 未找到 InputHandler，将无法接收输入！");
+            enabled = false; // 禁用组件
             return;
         }
 
@@ -77,15 +84,19 @@ public class CameraController3C : MonoBehaviour
         if (_recordPlaybackInputHandler == null)
         {
             Debug.LogError("CameraController3C: 未找到 RecordPlaybackInputHandler，将无法接收输入！");
+            enabled = false; // 禁用组件
             return;
         }
 
+        int thinLayer = LayerMask.NameToLayer("Thin");// 纤细物体需要排除
+        _thinLayerMask  = thinLayer >= 0 ? (1 << thinLayer) : 0;
+
         // 初始化摄像机旋转和位置
         transform.rotation = target.rotation;
-        transform.position = target.position - transform.forward * targetZoom;
-        currentYaw = transform.eulerAngles.y;
-        currentPitch = transform.eulerAngles.x;
-        currentZoom = targetZoom = 20f;
+        transform.position = target.position - transform.forward * _targetZoom;
+        _currentYaw = transform.eulerAngles.y;
+        _currentPitch = transform.eulerAngles.x;
+        _currentZoom = _targetZoom = 20f;
 
         // 注册回放开始监听
         _recordPlaybackInputHandler.OnPlaybackStart += OnPlaybackStartReceived;
@@ -122,9 +133,6 @@ public class CameraController3C : MonoBehaviour
 
     private void LateUpdate()
     {
-        if (target == null) return;
-        if (_cameraController3CParams == null) return;
-
         var dt = Time.deltaTime;
 
         // 处理视角旋转
@@ -137,20 +145,20 @@ public class CameraController3C : MonoBehaviour
         // 水平旋转（Y轴）
         if (Mathf.Abs(lookInput.x) > 0.01f)
         {
-            targetYaw = currentYaw + lookInput.x * _cameraController3CParams.mouseSensitivity;
+            _targetYaw = _currentYaw + lookInput.x * _cameraController3CParams.mouseSensitivity;
         }
 
         // 垂直旋转（X轴）
         if (Mathf.Abs(lookInput.y) > 0.01f)
         {
-            targetPitch = currentPitch - lookInput.y * _cameraController3CParams.mouseSensitivity;
+            _targetPitch = _currentPitch - lookInput.y * _cameraController3CParams.mouseSensitivity;
         }
     }
 
     private void HandleRot(float dt){
         var finalTargetYaw = Mathf.SmoothDampAngle(
-            currentYaw,
-            targetYaw,
+            _currentYaw,
+            _targetYaw,
             ref _horizontalRotationVelocity,
             _cameraController3CParams.rotationSmoothTime,
             float.PositiveInfinity,
@@ -158,8 +166,8 @@ public class CameraController3C : MonoBehaviour
         );
 
         var finalTargetPitch = Mathf.SmoothDampAngle(
-            currentPitch,
-            targetPitch,
+            _currentPitch,
+            _targetPitch,
             ref _verticalRotationVelocity,
             _cameraController3CParams.rotationSmoothTime,
             float.PositiveInfinity,
@@ -168,48 +176,45 @@ public class CameraController3C : MonoBehaviour
         finalTargetPitch = Mathf.Clamp(finalTargetPitch, _cameraController3CParams.minVerticalAngle, _cameraController3CParams.maxVerticalAngle);
 
         // 应用旋转到摄像机
-        currentYaw = finalTargetYaw;
-        currentPitch = finalTargetPitch;
-        transform.rotation = Quaternion.Euler(currentPitch, currentYaw, 0);
+        _currentYaw = finalTargetYaw;
+        _currentPitch = finalTargetPitch;
+        transform.rotation = Quaternion.Euler(_currentPitch, _currentYaw, 0);
     }
 
     private void CalculateZoom(float zoomInput)
     {
         if(Mathf.Abs(zoomInput) > 0.01f)
         {
-            targetZoom -= zoomInput * _cameraController3CParams.zoomSensitivity;
-            targetZoom = Mathf.Clamp(targetZoom, _cameraController3CParams.minZoom, _cameraController3CParams.maxZoom);
+            _targetZoom -= zoomInput * _cameraController3CParams.zoomSensitivity;
+            _targetZoom = Mathf.Clamp(_targetZoom, _cameraController3CParams.minZoom, _cameraController3CParams.maxZoom);
         }
     }
 
     private void HandleFollowAndZoom(float dt)
     {
-        if (target == null) return;
-        if (_cameraController3CParams == null) return;
-
         // 计算zoom
-        var cameraPosition = target.position - transform.forward * targetZoom;
+        var cameraPosition = target.position - transform.forward * _targetZoom;
 
-        var ratioOfGround = GetRatioByCollisonWithNormal(target.position, cameraPosition, _cameraController3CParams.cameraRadius);
-        var ratioOfThin = GetRatioByCollisonWithThin(target.position, cameraPosition, _cameraController3CParams.cameraRadius);
+        var ratioOfGround = GetRatioByCollisionWithNormal(target.position, cameraPosition, _cameraController3CParams.cameraRadius);
+        var ratioOfThin = GetRatioByCollisionWithThin(target.position, cameraPosition, _cameraController3CParams.cameraRadius);
         var finalRatio = Mathf.Min(ratioOfGround, ratioOfThin);
-        var finalZoom = targetZoom * finalRatio;
+        var finalZoom = _targetZoom * finalRatio;
         const float maxRatio = 1f;
 
 
-        if(finalRatio < maxRatio && finalZoom < currentZoom){
+        if(finalRatio < maxRatio && finalZoom < _currentZoom){
             // 发生了碰撞 且摄像机当前位置已经处于遮挡中 直接赋值避免穿模
-            currentZoom = finalZoom;
+            _currentZoom = finalZoom;
         }else{
             // 没有发生碰撞 或者发生了碰撞但摄像机当前位置仍在外部 可以插值
-            currentZoom = Mathf.Lerp(currentZoom, finalZoom, dt * _cameraController3CParams.zoomSmoothFactor);
+            _currentZoom = Mathf.Lerp(_currentZoom, finalZoom, dt * _cameraController3CParams.zoomSmoothFactor);
         }
 
-        Vector3 position = target.position - transform.forward * currentZoom;
+        Vector3 position = target.position - transform.forward * _currentZoom;
         transform.position = position;
     }
 
-    private float GetRatioByCollisonWithNormal(Vector3 targetPos, Vector3 cameraPos, float cameraRadius){
+    private float GetRatioByCollisionWithNormal(Vector3 targetPos, Vector3 cameraPos, float cameraRadius){
         var camToTarDis = Vector3.Distance(cameraPos, targetPos);
         var ratio = 1f;
 
@@ -219,11 +224,8 @@ public class CameraController3C : MonoBehaviour
             return ratio;
         }
 
-        int thinLayer = LayerMask.NameToLayer("Thin");// 纤细物体需要排除
-        int thinMask  = thinLayer >= 0 ? (1 << thinLayer) : 0;
-
         // 检测起点到终点的射线是否与触发器有碰撞
-        var layerMask = ~0 & ~(1 << target.gameObject.layer) & ~thinMask; // 排除对象所在层和Thin层
+        var layerMask = ~0 & ~(1 << target.gameObject.layer) & ~_thinLayerMask; // 排除对象所在层和Thin层
         if(Physics.SphereCast(targetPos, cameraRadius, (cameraPos - targetPos).normalized, out var hit, camToTarDis, layerMask))
         {
             ratio = hit.distance / camToTarDis;
@@ -232,7 +234,7 @@ public class CameraController3C : MonoBehaviour
         return ratio;
     }
 
-    private float GetRatioByCollisonWithThin(Vector3 targetPos, Vector3 cameraPos, float cameraRadius){
+    private float GetRatioByCollisionWithThin(Vector3 targetPos, Vector3 cameraPos, float cameraRadius){
         var camToTarDis = Vector3.Distance(cameraPos, targetPos);
         var ratio = 1f;
 
@@ -242,11 +244,8 @@ public class CameraController3C : MonoBehaviour
             return ratio;
         }
 
-        int thinLayer = LayerMask.NameToLayer("Thin");
-        int thinMask  = thinLayer >= 0 ? (1 << thinLayer) : 0;
-
         // 检测起点到终点的射线是否与普通碰撞体有碰撞
-        var layerMask = thinMask; // 排除对象所在层和地面层
+        var layerMask = _thinLayerMask; // 排除对象所在层和地面层
         var isCollision = MathUtil.TryGetEntryPoint(targetPos, cameraPos, layerMask, out var entryPoint, cameraRadius);
         if(isCollision)
         {
@@ -275,29 +274,29 @@ public class CameraController3C : MonoBehaviour
 
         // 设置摄像机旋转和位置
         transform.rotation = target.rotation;
-        transform.position = target.position - transform.forward * targetZoom;
-        currentYaw = transform.eulerAngles.y;
-        currentPitch = transform.eulerAngles.x;
-        currentZoom = targetZoom = 20f;
+        transform.position = target.position - transform.forward * _targetZoom;
+        _currentYaw = transform.eulerAngles.y;
+        _currentPitch = transform.eulerAngles.x;
+        _currentZoom = _targetZoom = 20f;
     }
 
-    public DataOf3C_Camera GetData(){
-        return new DataOf3C_Camera{
+    public SnapShot_Camera GetData(){
+        return new SnapShot_Camera{
             position = transform.position,
             rotation = transform.rotation,
-            zoom = targetZoom
+            zoom = _targetZoom
         };
     }
 
-    private void ApplyData(DataOf3C_Camera data){
+    private void ApplyData(SnapShot_Camera data){
         // 更新旋转相关的内部状态
-        targetYaw = data.rotation.eulerAngles.y;
-        targetPitch = data.rotation.eulerAngles.x;
-        currentYaw = data.rotation.eulerAngles.y;
-        currentPitch = data.rotation.eulerAngles.x;
+        _targetYaw = data.rotation.eulerAngles.y;
+        _targetPitch = data.rotation.eulerAngles.x;
+        _currentYaw = data.rotation.eulerAngles.y;
+        _currentPitch = data.rotation.eulerAngles.x;
 
         // 更新缩放相关的内部状态
-        currentZoom = targetZoom = data.zoom;
+        _currentZoom = _targetZoom = data.zoom;
 
         // 清空插值过程状态
         _horizontalRotationVelocity = 0f;

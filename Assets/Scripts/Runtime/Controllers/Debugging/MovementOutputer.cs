@@ -59,7 +59,7 @@ public class MovementOutputer : MonoBehaviour
         var cameraData = _cameraController3C.GetData();
         var playerData = _characterController3C.GetData();
         var inputData = GameRuntimeContext.Instance.GetInputData();
-        var dataOf3C = new DataOf3C{
+        var dataOf3C = new SnapShot{
             frame = Time.frameCount,
             time = Time.time,
             camera = cameraData,

@@ -1,6 +1,3 @@
-using System;
-using Runtime.Const.Enums;
-using Unity.VisualScripting;
 using UnityEngine;
 
 /// <summary>
@@ -48,24 +45,28 @@ public class CharacterController3C : MonoBehaviour
         if (_inputHandler == null)
         {
             Debug.LogError("CharacterController3C: 未找到 InputHandler，将无法接收输入！");
+            enabled = false; // 禁用组件
             return;
         }
 
         if(_recordPlaybackInputHandler == null)
         {
             Debug.LogError("CharacterController3C: 未找到 RecordPlaybackInputHandler，将无法接收输入！");
+            enabled = false; // 禁用组件
             return;
         }
 
         if(_characterController3CParams == null)
         {
             Debug.LogError("CharacterController3C: 未设置 CharacterController3CParams，将无法进行控制！");
+            enabled = false; // 禁用组件
             return;
         }
 
         if(_meshTransform == null)
         {
             Debug.LogError("CharacterController3C: 未设置 MeshTransform，将无法移动网格！");
+            enabled = false; // 禁用组件
             return;
         }
 
@@ -178,15 +179,15 @@ public class CharacterController3C : MonoBehaviour
         _velocity.y += Physics.gravity.y * _characterController3CParams.gravityFactor * Time.fixedDeltaTime;
     }
 
-    public DataOf3C_Player GetData(){
-        return new DataOf3C_Player{
+    public SnapShot_Player GetData(){
+        return new SnapShot_Player{
             position = transform.position,
             rotation = transform.rotation,
             velocity = _velocity
         };
     }
 
-    private void ApplyData(DataOf3C_Player data){
+    private void ApplyData(SnapShot_Player data){
         var wasEnabled = _characterController.enabled;
         _characterController.enabled = false;
 
